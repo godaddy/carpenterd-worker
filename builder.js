@@ -15,7 +15,7 @@ const retry = require('retryme');
 const ms = require('millisecond');
 
 // short -> long
-var envs = new Map([
+const envs = new Map([
   ['dev', 'development'],
   ['test', 'test'],
   ['prod', 'production']

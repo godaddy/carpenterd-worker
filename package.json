@@ -17,11 +17,10 @@
     "worker",
     "nsq",
     "nsqd",
-    "palettes",
     "builder",
     "webpack"
   ],
-  "author": "GoDaddy Engineers",
+  "author": "GoDaddy.com Operating Company LLC",
   "license": "MIT",
   "dependencies": {
     "async": "~2.1.5",
