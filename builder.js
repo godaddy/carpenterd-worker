@@ -111,7 +111,6 @@ Builder.prototype.build = function build(spec, callback) {
  * @api private
  */
 Builder.prototype.check = function (id, spec, next) {
-  const Build = this.models.Build;
   const BuildHead = this.models.BuildHead;
 
   const logId = `${id}-check`;
