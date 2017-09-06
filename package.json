@@ -1,0 +1,58 @@
+{
+  "name": "carpenterd-worker",
+  "version": "1.0.0",
+  "description": "Receives and runs builds received from nsqd",
+  "main": "index.js",
+  "scripts": {
+    "lint:fix": "eslint-godaddy --fix preboot/  test/ *.js",
+    "lint": "eslint-godaddy preboot/ test/ *.js",
+    "pretest": "npm run lint:fix",
+    "test": "istanbul cover _mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:godaddy/carpenterd-worker"
+  },
+  "keywords": [
+    "worker",
+    "nsq",
+    "nsqd",
+    "builder",
+    "webpack"
+  ],
+  "author": "GoDaddy.com Operating Company LLC",
+  "license": "MIT",
+  "dependencies": {
+    "async": "~2.1.5",
+    "bffs": "^5.0.1",
+    "bl": "~1.2.1",
+    "booting": "~1.0.0",
+    "datastar": "~1.3.2",
+    "failure": "^1.1.1",
+    "millisecond": "~0.1.2",
+    "nconf": "~0.8.4",
+    "nsq-stream": "~2.0.0",
+    "nsq.js-k8": "~1.0.2",
+    "one-time": "0.0.4",
+    "parallel-transform": "~1.1.0",
+    "pkgcloud": "~1.4.0",
+    "retryme": "^1.0.0",
+    "slay-config": "~2.2.0",
+    "uuid": "~3.0.1",
+    "warehouse-models": "^5.6.0",
+    "winston": "~2.3.1",
+    "workers-factory": "^1.4.0"
+  },
+  "devDependencies": {
+    "assume": "~1.4.1",
+    "assume-sinon": "~1.0.0",
+    "concat-stream": "~1.6.0",
+    "eslint": "~3.17.0",
+    "eslint-config-godaddy": "~1.0.0",
+    "eslint-plugin-json": "~1.2.0",
+    "eslint-plugin-mocha": "~4.8.0",
+    "istanbul": "~0.4.5",
+    "mocha": "~3.2.0",
+    "sinon": "~2.0.0"
+  }
+}

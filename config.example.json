@@ -1,0 +1,61 @@
+{
+  "http": 4445,
+  "nsq": {
+    "topic": "builds",
+    "channel": "run",
+    "nsqdHostExt": "nsqd.nsq.svc.cluster.local",
+    "nsqlookupd": [
+      "nsqlookupd-0.nsqlookupd.nsq.svc.cluster.local:4161",
+      "nsqlookupd-1.nsqlookupd.nsq.svc.cluster.local:4161",
+      "nsqlookupd-2.nsqlookupd.nsq.svc.cluster.local:4161"
+    ],
+    "pollInterval": 60000,
+    "maxInFlight": 3
+  },
+  "npm-tars": {
+    "bucket": "npm-tar-bucket-name",
+    "acl": "authenticated-read",
+    "pkgcloud": {
+      "provider": "amazon",
+      "endpoint": "s3.amazonaws.com",
+      "keyId": "01SLKJLJDSKJLK",
+      "key": "Fasdasfdgsd897987sdas",
+      "forcePathBucket": true
+    }
+  },
+  "datastar": {
+    "config": {
+      "user": "cassandra",
+      "password": "cassandra",
+      "keyspace": "warehouseai",
+      "hosts": [
+        "127.0.0.1"
+      ]
+    }
+  },
+  "assets": {
+    "prefix": "warehouse",
+    "cdn": {
+      "dev": {
+        "pkgcloud": {
+          "provider": "amazon",
+          "endpoint": "s3.amazonaws.com",
+          "keyId": "01SLKJLJDSKJLK",
+          "key": "Fasdasfdgsd897987sdas",
+          "forcePathBucket": true
+        },
+        "url": "https://my-custom-dev-cdn-dns.com/"
+      },
+      "test": {
+        "pkgcloud": {
+          "provider": "amazon",
+          "endpoint": "s3.amazonaws.com",
+          "keyId": "01SLKJLJDSKJLK",
+          "key": "Fasdasfdgsd897987sdas",
+          "forcePathBucket": true
+        },
+        "url": "https://my-custom-test-cdn-dns.com/"
+      }
+    }
+  }
+}
