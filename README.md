@@ -1,5 +1,8 @@
 # carpenterd-worker
 
+[![Build
+Status](https://travis-ci.org/godaddy/carpenterd-worker.svg?branch=master)](https://travis-ci.org/godaddy/carpenterd-worker)
+
 The [`carpenterd`][carpenterd] worker process for executing builds.
 
 ## Install
