@@ -11,6 +11,7 @@ const once = require('one-time');
 const pkgcloud = require('pkgcloud');
 const semver = require('semver');
 const fs = require('fs');
+const retry = require('retryme');
 const ms = require('millisecond');
 
 // short -> long
@@ -34,8 +35,10 @@ function Builder(opts) {
   this.pkgcloud = pkgcloud.storage.createClient(
     opts.pkgcloud || {}
   );
+  this.retry = opts.retry || {};
   this.assets = new Bffs(assign({
-    models: opts.models
+    models: opts.models,
+    datastar: opts.datastar
   }, opts.assets || {}));
   this.models = opts.models;
   this.conc = opts.concurrency || 2;
@@ -104,7 +107,6 @@ Builder.prototype.build = function build(spec, callback) {
  * @function check
  * @param {String} id - id assigned for this build
  * @param {Object} spec - specification for the build
- * @param {Function} skip - function to call if this build already exists and we can safely skip it
  * @param {Function} next - continue build process
  * @api private
  */
@@ -114,18 +116,19 @@ Builder.prototype.check = function (id, spec, next) {
 
   const logId = `${id}-check`;
   this.log.profile(logId);
-  async.parallel({
-    build: Build.findOne.bind(Build, spec),
-    head: BuildHead.findOne.bind(BuildHead, spec)
-  }, (err, result) => {
-    const { head, build } = result;
+  BuildHead.findOne(spec, (err, head) => {
     this.log.profile(logId, 'Check complete');
     // We should still try and build even if it errors
     if (err) return next();
     // If there is no build we definitely need to run it
-    if (!build || !head) return next();
+    if (!head) return next();
     // If the build already exists then skip it
     if (head.version === spec.version) return next(failure('equal versions', { skip: true }));
+
+    // TODO: Consider in cases where there is a spec less than the head version
+    // but no `build` version to modify the spec or signal a different kind of
+    // publish to happen so that the HEAD isnt replaced but the `build` is
+    // created
 
     // if the spec version is smaller than the current head, skip it
     if (semver.lt(spec.version, head.version)) return next(failure('old version', { skip: true }));
@@ -155,7 +158,7 @@ Builder.prototype.cleanup = function clean(root, next) {
  * @param {String} id - unique identifier for this build
  * @param {Object} spec - specification for build
  * @param {Object} paths - object of paths used for build
- * @param {Function} next - continuation function to call when finished
+ * @param {Function} fn - continuation function to call when finished
  * @returns {undefined}
  * @api private
  */
@@ -163,9 +166,8 @@ Builder.prototype._build = function _build(id, spec, paths, fn) {
   //
   // TODO: refactor workers-factory to have sane options
   //
-  const type = spec.type;
+  const type = spec.type || 'webpack';
   const logId = `${id}-${type}-build`;
-  this.log.profile(logId);
   const opts = {
     id: id,
     name: spec.name,
@@ -189,6 +191,7 @@ Builder.prototype._build = function _build(id, spec, paths, fn) {
   const factory = workers[type];
   const op = retry.op(this.retry);
   return void op.attempt(next => {
+    this.log.profile(logId);
     return void factory(opts, (err, results) => {
       this.log.profile(logId, 'Webpack build', assign({}, spec));
       next(err, results);

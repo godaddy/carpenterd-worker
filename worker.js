@@ -9,6 +9,7 @@ module.exports = function worker(err, app) {
   const builder = new Builder({
     log: app.log,
     models: app.models,
+    datastar: app.datastar,
     retry: app.comfig.get('retry'),
     bucket: app.config.get('npm-tars:bucket'),
     pkgcloud: app.config.get('npm-tars:pkgcloud'),

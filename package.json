@@ -4,8 +4,8 @@
   "description": "Receives and runs builds received from nsqd",
   "main": "index.js",
   "scripts": {
-    "lint:fix": "eslint --fix -c .eslintrc preboot/  test/ *.js",
-    "lint": "eslint -c .eslintrc preboot/ test/ *.js",
+    "lint:fix": "eslint-godaddy --fix preboot/  test/ *.js",
+    "lint": "eslint-godaddy preboot/ test/ *.js",
     "pretest": "npm run lint:fix",
     "test": "istanbul cover _mocha"
   },
