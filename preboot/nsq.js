@@ -11,6 +11,7 @@ module.exports = function nsqboot(app, next) {
   // every namespace.
   //
   config.addrModify = (addr) => {
+    if (!config.nsqdHostExt) return addr;
     let [host, port] = addr.split(':');
     host = `${host}.${config.nsqdHostExt}`;
     return [host, port].join(':');
