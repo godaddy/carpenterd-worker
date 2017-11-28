@@ -205,27 +205,30 @@ Builder.prototype._build = function _build(id, spec, paths, fn) {
  * @function tarball
  * @param {Object} spec - specification for build
  * @param {String} tarpath - path to write the tarball
- * @param {Function} next - continuation function to call when finished
+ * @param {Function} fn - continuation function to call when finished
+ * @returns {undefined} Nothing
  * @api private
  */
-Builder.prototype.tarball = function tarball(spec, tarpath, next) {
-  const done = once(next);
+Builder.prototype.tarball = function tarball(spec, tarpath, fn) {
+  const op = retry.op(this.retry);
+  return void op.attempt(next => {
+    const done = once(next);
+    const id = `${encodeURIComponent(spec.name)}-${spec.version}.tgz`;
+    this.log.info('Fetch tarball', { bucket: this.bucket, id: id });
+    this.log.profile(tarpath);
 
-  const id = `${encodeURIComponent(spec.name)}-${spec.version}.tgz`;
-  this.log.info('Fetch tarball', { bucket: this.bucket, id: id });
-  this.log.profile(tarpath);
-  this.pkgcloud.download({
-    container: this.bucket,
-    remote: id
-  })
-  .on('error', done)
-  .pipe(fs.createWriteStream(tarpath))
-  .once('error', done)
-  .once('finish', () => {
-    this.log.profile(tarpath, 'Fetch tarball finish', assign({}, spec));
-    done();
-  });
-
+    this.pkgcloud.download({
+      container: this.bucket,
+      remote: id
+    })
+    .on('error', done)
+    .pipe(fs.createWriteStream(tarpath))
+    .once('error', done)
+    .once('finish', () => {
+      this.log.profile(tarpath, 'Fetch tarball finish', assign({}, spec));
+      done();
+    });
+  }, fn);
 };
 
 /**
