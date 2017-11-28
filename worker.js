@@ -10,7 +10,7 @@ module.exports = function worker(err, app) {
     log: app.log,
     models: app.models,
     datastar: app.datastar,
-    retry: app.comfig.get('retry'),
+    retry: app.config.get('retry'),
     bucket: app.config.get('npm-tars:bucket'),
     pkgcloud: app.config.get('npm-tars:pkgcloud'),
     assets: app.config.get('assets'),
