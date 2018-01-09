@@ -331,7 +331,7 @@ Builder.prototype.stream = function stream() {
 
   return parallel(this.conc, (data, cb) => {
     this.build(data, (err) => {
-      if (err) this.log.error('Error building: %s', err.message, data);
+      if (err) this.log.error('Error building: %s', err.message, { logs: err.output, ...data });
       cb(null, data);
     });
   });
