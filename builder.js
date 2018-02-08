@@ -221,13 +221,13 @@ Builder.prototype.tarball = function tarball(spec, tarpath, fn) {
       container: this.bucket,
       remote: id
     })
-    .on('error', done)
-    .pipe(fs.createWriteStream(tarpath))
-    .once('error', done)
-    .once('finish', () => {
-      this.log.profile(tarpath, 'Fetch tarball finish', assign({}, spec));
-      done();
-    });
+      .on('error', done)
+      .pipe(fs.createWriteStream(tarpath))
+      .once('error', done)
+      .once('finish', () => {
+        this.log.profile(tarpath, 'Fetch tarball finish', assign({}, spec));
+        done();
+      });
   }, fn);
 };
 
