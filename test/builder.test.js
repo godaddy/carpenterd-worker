@@ -9,11 +9,10 @@ const os = require('os');
 const path = require('path');
 const noop = function () {};
 const fixtures = require('./fixtures');
+const Writer = require('../writer');
 const nsqStream = require('nsq-stream');
 
 assume.use(require('assume-sinon'));
-
-const undef = void 0;
 
 describe('Builder', function () {
   this.timeout(2E5);
@@ -71,79 +70,20 @@ describe('Builder', function () {
     app.datastar.close(done);
   });
 
-  describe('builder._write', function () {
+  describe('builder.write', function () {
     it('should not create the writer without a topic', function (done) {
-      const publish = sandbox.stub();
-      const fixture = new Builder({
-        log: { info: noop, error: noop, profile: noop },
-        paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
-        datastar: app.datastar,
-        models: app.models,
-        bucket: process.env.AWS_BUCKET,
-        pkgcloud: {
-          provider: 'amazon',
-          endpoint: 's3.amazonaws.com',
-          keyId: process.env.AWS_KEY_ID,
-          key: process.env.AWS_KEY,
-          forcePathBucket: true
-        },
-        concurrency: 1,
-        status: { writer: { publish }}
-      });
-
+      builder.assets.publish.yieldsAsync(null, null);
+      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
       sandbox.stub(nsqStream, 'createWriteStream');
-      sandbox.stub(fixture, 'mkdirp').yields();
-      sandbox.stub(fixture, 'tarball').yields();
-      sandbox.stub(fixture, '_build').yields();
 
-      const spec = {
-        name: 'package-name',
-        env: 'dev',
-        version: '1.2.3',
-        locale: 'en-US',
-        type: 'webpack'
-      };
-
-      fixture.build(spec, function () {
+      builder.build({
+        name: 'test',
+        version: '1.0.0',
+        env: 'dev'
+      }, (err) => {
         assume(nsqStream.createWriteStream).is.not.called();
-        assume(fixture.mkdirp).is.calledWith(spec, sinon.match.object, undef, sinon.match.func);
-        assume(fixture.tarball).is.calledWith(spec, sinon.match.string, undef, sinon.match.func);
-        assume(fixture._build).is.calledWith(sinon.match.string, spec, sinon.match.object, undef, sinon.match.func);
-
-        done();
-      });
-    });
-
-    it('does nothing without a writer', function (done) {
-      const publish = sinon.stub();
-      const fixture = new Builder({
-        log: { info: noop, error: noop, profile: noop },
-        paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
-        datastar: app.datastar,
-        models: app.models,
-        bucket: process.env.AWS_BUCKET,
-        pkgcloud: {
-          provider: 'amazon',
-          endpoint: 's3.amazonaws.com',
-          keyId: process.env.AWS_KEY_ID,
-          key: process.env.AWS_KEY,
-          forcePathBucket: true
-        },
-        concurrency: 1,
-        status: { writer: { publish }}
-      });
-
-      const spec = {
-        name: 'package-name',
-        env: 'dev',
-        version: '1.2.3',
-        locale: 'en-US',
-        type: 'webpack'
-      };
-
-      fixture._write(undef, spec, { eventType: 'event', msg: 'msg' }, function () {
-        assume(publish).is.not.called();
-        done();
+        done(err);
       });
     });
   });
@@ -203,7 +143,7 @@ describe('Builder', function () {
       builder.tarball({
         name: 'test',
         version: '1.0.0'
-      }, tarpath, undef, (err) => {
+      }, tarpath, new Writer(), (err) => {
         assume(err).is.falsey();
         fs.stat(tarpath, (statErr) => {
           assume(statErr).is.falsey();

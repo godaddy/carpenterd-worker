@@ -13,7 +13,7 @@ const semver = require('semver');
 const fs = require('fs');
 const retry = require('retryme');
 const ms = require('millisecond');
-const nsqStream = require('nsq-stream');
+const Writer = require('./writer');
 
 // short -> long
 const envs = new Map([
@@ -52,58 +52,35 @@ function Builder(opts) {
   ).unref();
 }
 
-Builder.prototype._write = function _write(writer, spec, statusInfo, done = () => {}) {
-  if (!writer) return done();
-
-  const { type: buildType, ...other } = spec;
-  const msg = {
-    ...statusInfo,
-    ...other,
-    buildType
-  };
-
-  writer._write(msg, done);
-};
-
-Builder.prototype._end = function _end(writer, done = () => {}) {
-  if (!writer) return done();
-
-  writer.end(done);
-};
-
 Builder.prototype._completeBuild = function _completeBuild(err, opts, callback) {
-  const { id, spec, paths, writeStream } = opts;
+  const { id, spec, paths, writer } = opts;
   if (err) {
-    this._write(writeStream, spec, {
+    return writer.end({
       eventType: 'error',
       message: 'unable to publish'
-    });
-
-    return this._end(writeStream, callback.bind(this, err));
+    }, callback.bind(this, err));
   }
 
   this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
 
-  this._write(writeStream, spec, {
+  writer.write({
     eventType: 'event',
     message: 'published'
   }, () => {
-    this._end(writeStream, () => {
-      //
-      // Cleanup?
-      // - We possibly want to reuse tarballs to prevent repeated fetching of
-      //   the same version. We might want to wait a day? or x number of hours
-      //   to do cleanup
-      // UPDATE: Due to the possible concurrent nature of builds we cant rely
-      // on trying to read a possible existing file before its done being
-      // written (referring to fetching tarballs). in the future we should
-      // look back into this optimization. It will require us to have a global
-      // cache that defines fetching state so we can cleanly wait and use the
-      // file that is already in process of downloading or the file that has
-      // already been downloaded
-      //
-      this.cleanup(paths.root, () => callback());
-    });
+    //
+    // Cleanup?
+    // - We possibly want to reuse tarballs to prevent repeated fetching of
+    //   the same version. We might want to wait a day? or x number of hours
+    //   to do cleanup
+    // UPDATE: Due to the possible concurrent nature of builds we cant rely
+    // on trying to read a possible existing file before its done being
+    // written (referring to fetching tarballs). in the future we should
+    // look back into this optimization. It will require us to have a global
+    // cache that defines fetching state so we can cleanly wait and use the
+    // file that is already in process of downloading or the file that has
+    // already been downloaded
+    //
+    writer.end({ eventType: 'complete' }, this.cleanup.bind(this, paths.root, () => callback()));
   });
 };
 
@@ -121,7 +98,7 @@ Builder.prototype.build = function build(spec, callback) {
   const paths = this.paths(spec, id);
 
   const { writer, topic } = this.status;
-  const writeStream = writer && topic && nsqStream.createWriteStream(writer, topic);
+  const writeStream = new Writer({ writer, topic, spec, log: this.log });
 
   this.log.profile(`${id}-init`);
   //
@@ -130,7 +107,7 @@ Builder.prototype.build = function build(spec, callback) {
   this.check(id, spec, (checkError) => {
     if (checkError && checkError.skip) return callback();
     async.series({
-      mkdirp: this.mkdirp.bind(this, spec, paths, writeStream),
+      mkdirp: this.mkdirp.bind(this, paths, writeStream),
       tarball: this.tarball.bind(this, spec, paths.tarball, writeStream),
       build: this._build.bind(this, id, spec, paths, writeStream)
     }, (err, results) => {
@@ -141,7 +118,7 @@ Builder.prototype.build = function build(spec, callback) {
       this.assets.publish(spec, results.build, (publishError) => {
         this.log.profile(`${id}-publish`, 'Publish assets time', assign({}, spec));
 
-        this._completeBuild(publishError, { id, spec, paths, writeStream }, callback);
+        this._completeBuild(publishError, { id, spec, paths, writer: writeStream }, callback);
       });
     });
   });
@@ -243,7 +220,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
       next(err, results);
     });
   }, function (err) {
-    this._write(writer, spec, {
+    writer.write({
       eventType: !err ? 'event' : 'error',
       message: !err ? 'webpack build completed' : err
     });
@@ -283,7 +260,7 @@ Builder.prototype.tarball = function tarball(spec, tarpath, writer, fn) {
         done();
       });
   }, function (err) {
-    this._write(writer, spec, {
+    writer.write({
       eventType: !err ? 'event' : 'error',
       message: !err ? 'fetched tarball' : err
     });
@@ -296,18 +273,17 @@ Builder.prototype.tarball = function tarball(spec, tarpath, writer, fn) {
  * Make all required directories
  *
  * @function mkdirp
- * @param {Object} spec - specification for build
  * @param {Object} paths - object that contains paths for this build
  * @param {Object} writer - writable stream for nsq status data
  * @param {Function} next - continuation function called when completed
  * @api private
  */
-Builder.prototype.mkdirp = function mkdirpp(spec, paths, writer, next) {
+Builder.prototype.mkdirp = function mkdirpp(paths, writer, next) {
   //
   // Only need to run this on publish because its nested within root
   //
   mkdirp(paths.publish, function (err) {
-    this._write(writer, spec, {
+    writer.write({
       eventType: !err ? 'event' : 'error',
       message: !err ? 'made directory' : err
     });
