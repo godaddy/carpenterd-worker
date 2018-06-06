@@ -13,6 +13,7 @@ const semver = require('semver');
 const fs = require('fs');
 const retry = require('retryme');
 const ms = require('millisecond');
+const nsqStream = require('nsq-stream');
 
 // short -> long
 const envs = new Map([
@@ -43,12 +44,68 @@ function Builder(opts) {
   this.models = opts.models;
   this.conc = opts.concurrency || 2;
   this._paths = opts.paths;
+  this.status = opts.status || {};
 
   if (opts.env !== 'development') setInterval(
     this.purge.bind(this),
     ms('1hour')
   ).unref();
 }
+
+Builder.prototype._write = function _write(writer, spec, statusInfo, done = () => {}) {
+  if (!writer) return done();
+
+  const { type: buildType, ...other } = spec;
+  const msg = {
+    ...statusInfo,
+    ...other,
+    buildType
+  };
+
+  writer._write(msg, done);
+};
+
+Builder.prototype._end = function _end(writer, done = () => {}) {
+  if (!writer) return done();
+
+  writer.end(done);
+};
+
+Builder.prototype._completeBuild = function _completeBuild(err, opts, callback) {
+  const { id, spec, paths, writeStream } = opts;
+  if (err) {
+    this._write(writeStream, spec, {
+      eventType: 'error',
+      message: 'unable to publish'
+    });
+
+    return this._end(writeStream, callback.bind(this, err));
+  }
+
+  this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
+
+  this._write(writeStream, spec, {
+    eventType: 'event',
+    message: 'published'
+  }, () => {
+    this._end(writeStream, () => {
+      //
+      // Cleanup?
+      // - We possibly want to reuse tarballs to prevent repeated fetching of
+      //   the same version. We might want to wait a day? or x number of hours
+      //   to do cleanup
+      // UPDATE: Due to the possible concurrent nature of builds we cant rely
+      // on trying to read a possible existing file before its done being
+      // written (referring to fetching tarballs). in the future we should
+      // look back into this optimization. It will require us to have a global
+      // cache that defines fetching state so we can cleanly wait and use the
+      // file that is already in process of downloading or the file that has
+      // already been downloaded
+      //
+      this.cleanup(paths.root, () => callback());
+    });
+  });
+};
 
 /**
  * Build the given specification and publish it to ceph
@@ -63,39 +120,28 @@ Builder.prototype.build = function build(spec, callback) {
   const id = uuid();
   const paths = this.paths(spec, id);
 
+  const { writer, topic } = this.status;
+  const writeStream = writer && topic && nsqStream.createWriteStream(writer, topic);
+
   this.log.profile(`${id}-init`);
   //
   // Check to see if we actually need to run this build
   //
-  this.check(id, spec, (err) => {
-    if (err && err.skip) return callback();
+  this.check(id, spec, (checkError) => {
+    if (checkError && checkError.skip) return callback();
     async.series({
-      mkdirp: this.mkdirp.bind(this, paths),
-      tarball: this.tarball.bind(this, spec, paths.tarball),
-      build: this._build.bind(this, id, spec, paths)
+      mkdirp: this.mkdirp.bind(this, spec, paths, writeStream),
+      tarball: this.tarball.bind(this, spec, paths.tarball, writeStream),
+      build: this._build.bind(this, id, spec, paths, writeStream)
     }, (err, results) => {
       if (err) return callback(err);
 
       this.log.info('publish assets', spec);
       this.log.profile(`${id}-publish`);
-      this.assets.publish(spec, results.build, (err) => {
+      this.assets.publish(spec, results.build, (publishError) => {
         this.log.profile(`${id}-publish`, 'Publish assets time', assign({}, spec));
-        if (err) return callback(err);
-        this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
-        //
-        // Cleanup?
-        // - We possibly want to reuse tarballs to prevent repeated fetching of
-        //   the same version. We might want to wait a day? or x number of hours
-        //   to do cleanup
-        // UPDATE: Due to the possible concurrent nature of builds we cant rely
-        // on trying to read a possible existing file before its done being
-        // written (referring to fetching tarballs). in the future we should
-        // look back into this optimization. It will require us to have a global
-        // cache that defines fetching state so we can cleanly wait and use the
-        // file that is already in process of downloading or the file that has
-        // already been downloaded
-        //
-        this.cleanup(paths.root, () => callback());
+
+        this._completeBuild(publishError, { id, spec, paths, writeStream }, callback);
       });
     });
   });
@@ -157,11 +203,12 @@ Builder.prototype.cleanup = function clean(root, next) {
  * @param {String} id - unique identifier for this build
  * @param {Object} spec - specification for build
  * @param {Object} paths - object of paths used for build
+ * @param {Object} writer - writable stream for nsq status data
  * @param {Function} fn - continuation function to call when finished
  * @returns {undefined}
  * @api private
  */
-Builder.prototype._build = function _build(id, spec, paths, fn) {
+Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // eslint-disable-line max-params
   //
   // TODO: refactor workers-factory to have sane options
   //
@@ -195,8 +242,14 @@ Builder.prototype._build = function _build(id, spec, paths, fn) {
       this.log.profile(logId, 'Webpack build', assign({}, spec));
       next(err, results);
     });
-  }, fn);
+  }, function (err) {
+    this._write(writer, spec, {
+      eventType: !err ? 'event' : 'error',
+      message: !err ? 'webpack build completed' : err
+    });
 
+    fn(...arguments);
+  }.bind(this));
 };
 
 /**
@@ -205,11 +258,12 @@ Builder.prototype._build = function _build(id, spec, paths, fn) {
  * @function tarball
  * @param {Object} spec - specification for build
  * @param {String} tarpath - path to write the tarball
+ * @param {Object} writer - writable stream for nsq status data
  * @param {Function} fn - continuation function to call when finished
  * @returns {undefined} Nothing
  * @api private
  */
-Builder.prototype.tarball = function tarball(spec, tarpath, fn) {
+Builder.prototype.tarball = function tarball(spec, tarpath, writer, fn) {
   const op = retry.op(this.retry);
   return void op.attempt(next => {
     const done = once(next);
@@ -228,22 +282,38 @@ Builder.prototype.tarball = function tarball(spec, tarpath, fn) {
         this.log.profile(tarpath, 'Fetch tarball finish', assign({}, spec));
         done();
       });
-  }, fn);
+  }, function (err) {
+    this._write(writer, spec, {
+      eventType: !err ? 'event' : 'error',
+      message: !err ? 'fetched tarball' : err
+    });
+
+    fn(...arguments);
+  }.bind(this));
 };
 
 /**
  * Make all required directories
  *
  * @function mkdirp
+ * @param {Object} spec - specification for build
  * @param {Object} paths - object that contains paths for this build
+ * @param {Object} writer - writable stream for nsq status data
  * @param {Function} next - continuation function called when completed
  * @api private
  */
-Builder.prototype.mkdirp = function mkdirpp(paths, next) {
+Builder.prototype.mkdirp = function mkdirpp(spec, paths, writer, next) {
   //
   // Only need to run this on publish because its nested within root
   //
-  mkdirp(paths.publish, next);
+  mkdirp(paths.publish, function (err) {
+    this._write(writer, spec, {
+      eventType: !err ? 'event' : 'error',
+      message: !err ? 'made directory' : err
+    });
+
+    next(...arguments);
+  }.bind(this));
 };
 
 /**
@@ -290,8 +360,8 @@ Builder.prototype.purge = function purge(done) {
     if (done) return done(err);
   }
 
-  fs.readdir(target, (err, files) => {
-    if (err) return finish(`Failed to read dir ${target} for cleanup`);
+  fs.readdir(target, (readdirError, files) => {
+    if (readdirError) return finish(`Failed to read dir ${target} for cleanup`);
     if (!files) return finish(null, 'No files to purge');
 
     async.reduce(files, 0, (i, file, next) => {
@@ -328,7 +398,6 @@ Builder.prototype.purge = function purge(done) {
  */
 Builder.prototype.stream = function stream() {
   // returns a build stream for incoming messages as each data event
-
   return parallel(this.conc, (data, cb) => {
     this.build(data, (err) => {
       if (err) this.log.error('Error building: %s', err.message, { logs: err.output, ...data });
