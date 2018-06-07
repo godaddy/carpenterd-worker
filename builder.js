@@ -54,16 +54,12 @@ function Builder(opts) {
 
 Builder.prototype._completeBuild = function _completeBuild(err, opts, callback) {
   const { id, spec, paths, writer } = opts;
-  if (err) {
-    return writer.end({
-      eventType: 'error',
-      message: 'unable to publish'
-    }, callback.bind(this, err));
-  }
+
+  if (err) return writer.end(err, null, callback.bind(this, err));
 
   this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
 
-  writer.write({
+  writer.write(null, {
     eventType: 'event',
     message: 'published'
   }, () => {
@@ -111,7 +107,7 @@ Builder.prototype.build = function build(spec, callback) {
       tarball: this.tarball.bind(this, spec, paths.tarball, writeStream),
       build: this._build.bind(this, id, spec, paths, writeStream)
     }, (err, results) => {
-      if (err) return callback(err);
+      if (err) return writeStream.end(null, callback.bind(this, err));
 
       this.log.info('publish assets', spec);
       this.log.profile(`${id}-publish`);
@@ -220,13 +216,13 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
       next(err, results);
     });
   }, function (err) {
-    writer.write({
-      eventType: !err ? 'event' : 'error',
-      message: !err ? 'webpack build completed' : err
+    writer.write(err, {
+      eventType: 'event',
+      message: 'webpack build completed'
     });
 
     fn(...arguments);
-  }.bind(this));
+  });
 };
 
 /**
@@ -260,13 +256,13 @@ Builder.prototype.tarball = function tarball(spec, tarpath, writer, fn) {
         done();
       });
   }, function (err) {
-    writer.write({
-      eventType: !err ? 'event' : 'error',
-      message: !err ? 'fetched tarball' : err
+    writer.write(err, {
+      eventType: 'event',
+      message: 'fetched tarball'
     });
 
     fn(...arguments);
-  }.bind(this));
+  });
 };
 
 /**
@@ -283,13 +279,13 @@ Builder.prototype.mkdirp = function mkdirpp(paths, writer, next) {
   // Only need to run this on publish because its nested within root
   //
   mkdirp(paths.publish, function (err) {
-    writer.write({
-      eventType: !err ? 'event' : 'error',
-      message: !err ? 'made directory' : err
+    writer.write(err, {
+      eventType: 'event',
+      message: 'made directory'
     });
 
     next(...arguments);
-  }.bind(this));
+  });
 };
 
 /**

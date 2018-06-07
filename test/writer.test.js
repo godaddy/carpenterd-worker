@@ -1,3 +1,4 @@
+/* eslint max-nested-callbacks: 0 */
 const Writer = require('../writer');
 const assume = require('assume');
 const sinon = require('sinon');
@@ -75,8 +76,7 @@ describe('Writer', function () {
         writer.writeStream = null;
         sandbox.stub(writer, 'buildStatusMessage');
 
-        // eslint-disable-next-line max-nested-callbacks
-        writer.write({ eventType: 'complete' }, function () {
+        writer.write(null, { eventType: 'complete' }, function () {
           assume(writer.buildStatusMessage).not.called();
           done();
         });
@@ -85,16 +85,36 @@ describe('Writer', function () {
       it('logs an error if the stream is no longer writable', function (done) {
         writer.writeStream._writableState.ended = true;
 
-        // eslint-disable-next-line max-nested-callbacks
-        writer.write({ eventType: 'complete' }, function () {
+        writer.write(null, { eventType: 'complete' }, function () {
           assume(mockLog.error).calledWith('Unable to write to stream', sinon.match.object);
           done();
         });
       });
 
+      it('writes an error if it is passed an error object', function (done) {
+        writer.write(
+          new Error('Penguins are flying'),
+          {
+            eventType: 'event',
+            message: 'Penguins grounded'
+          },
+          function () {
+            assume(writer.writeStream.write).calledWith(sinon.match({
+              eventType: 'error',
+              name: 'package-name',
+              env: 'dev',
+              version: '1.2.3',
+              locale: 'en-US',
+              buildType: 'webpack',
+              message: 'Penguins are flying'
+            }, sinon.match.func));
+
+            done();
+          });
+      });
+
       it('writes the message to the stream', function (done) {
-        // eslint-disable-next-line max-nested-callbacks
-        writer.write({ eventType: 'event' }, function () {
+        writer.write(null, { eventType: 'event' }, function () {
           assume(writer.writeStream.write).calledWith(sinon.match({
             eventType: 'event',
             name: 'package-name',
@@ -114,15 +134,22 @@ describe('Writer', function () {
         writer.writeStream = null;
         sandbox.stub(writer, 'buildStatusMessage');
 
-        // eslint-disable-next-line max-nested-callbacks
         writer.end({ eventType: 'complete' }, function () {
           assume(writer.buildStatusMessage).not.called();
           done();
         });
       });
 
+      it('logs an error if the stream is no longer writable', function (done) {
+        writer.writeStream._writableState.ended = true;
+
+        writer.end({ eventType: 'complete' }, function () {
+          assume(mockLog.error).calledWith('Unable to end stream', sinon.match.object);
+          done();
+        });
+      });
+
       it('ends the stream with the given message', function (done) {
-        // eslint-disable-next-line max-nested-callbacks
         writer.end({ eventType: 'complete' }, function () {
           assume(writer.writeStream.end).calledWith(sinon.match({
             eventType: 'complete',
