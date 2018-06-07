@@ -158,4 +158,105 @@ describe('Builder', function () {
       builder.purge(done);
     });
   });
+
+  describe('status messsages', function () {
+    before(function () {
+      builder = new Builder({
+        log: { info: noop, error: noop, profile: noop },
+        paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
+        datastar: app.datastar,
+        models: app.models,
+        bucket: process.env.AWS_BUCKET,
+        pkgcloud: {
+          provider: 'amazon',
+          endpoint: 's3.amazonaws.com',
+          keyId: process.env.AWS_KEY_ID,
+          key: process.env.AWS_KEY,
+          forcePathBucket: true
+        },
+        concurrency: 1,
+        status: {
+          writer: {},
+          topic: 'status'
+        }
+      });
+    });
+
+    it('should successfully publish status messages for fetch, build and publishing assets', function (done) {
+      builder.assets.publish.yieldsAsync(null, null);
+      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+
+      const mockWriteStream = {
+        write: sandbox.stub().yields(),
+        end: sandbox.stub().yields(),
+        _writableState: {}
+      };
+      sandbox.stub(nsqStream, 'createWriteStream').returns(mockWriteStream);
+
+      builder.build({
+        name: 'test',
+        version: '1.0.0',
+        env: 'dev',
+        locale: 'en-US',
+        type: 'webpack'
+      }, (err) => {
+
+        // mkdir
+        assume(mockWriteStream.write).calledWith(sinon.match({
+          eventType: 'event',
+          name: 'test',
+          env: 'dev',
+          version: '1.0.0',
+          locale: 'en-US',
+          buildType: 'webpack',
+          message: 'made directory'
+        }), sinon.match.func);
+
+        // tarball
+        assume(mockWriteStream.write).calledWith(sinon.match({
+          eventType: 'event',
+          name: 'test',
+          env: 'dev',
+          version: '1.0.0',
+          locale: 'en-US',
+          buildType: 'webpack',
+          message: 'fetched tarball'
+        }), sinon.match.func);
+
+        // webpack
+        assume(mockWriteStream.write).calledWith(sinon.match({
+          eventType: 'event',
+          name: 'test',
+          env: 'dev',
+          version: '1.0.0',
+          locale: 'en-US',
+          buildType: 'webpack',
+          message: 'webpack build completed'
+        }), sinon.match.func);
+
+        // published
+        assume(mockWriteStream.write).calledWith(sinon.match({
+          eventType: 'event',
+          name: 'test',
+          env: 'dev',
+          version: '1.0.0',
+          locale: 'en-US',
+          buildType: 'webpack',
+          message: 'published'
+        }), sinon.match.func);
+
+        assume(mockWriteStream.end).calledWith(sinon.match({
+          eventType: 'complete',
+          name: 'test',
+          env: 'dev',
+          version: '1.0.0',
+          locale: 'en-US',
+          buildType: 'webpack'
+        }), sinon.match.func);
+
+        done(err);
+      });
+    });
+  });
 });

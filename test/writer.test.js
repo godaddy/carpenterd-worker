@@ -107,7 +107,7 @@ describe('Writer', function () {
               locale: 'en-US',
               buildType: 'webpack',
               message: 'Penguins are flying'
-            }, sinon.match.func));
+            }), sinon.match.func);
 
             done();
           });
@@ -122,7 +122,7 @@ describe('Writer', function () {
             version: '1.2.3',
             locale: 'en-US',
             buildType: 'webpack'
-          }, sinon.match.func));
+          }), sinon.match.func);
 
           done();
         });
@@ -158,7 +158,7 @@ describe('Writer', function () {
             version: '1.2.3',
             locale: 'en-US',
             buildType: 'webpack'
-          }, sinon.match.func));
+          }), sinon.match.func);
 
           done();
         });
