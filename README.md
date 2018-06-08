@@ -56,3 +56,39 @@ See the example config `config.example.json` in this repo.
 [cassandra]: http://cassandra.apache.org/
 [nsq.js]: https://github.com/jcrugzz/nsq.js/tree/addr-modify
 
+## Status-Api
+
+Carpenterd-worker supports posting messages to the [warehouse.ai] status-api via NSQ.
+It will post messages to the nsq topic configured at:
+
+```js
+{
+  // ...other configuration
+  "nsq": {
+    "statusTopic": "an-nsq-topic", // topic that you choose for the status-api to consume
+    // ...other nsq setup
+  },
+  // ...other configuration
+}
+```
+
+The NSQ payloads will be object that take the form:
+
+```js
+{
+    eventType: "event|error", // The type of status event that occurred
+    name: "package-name",
+    env: "dev", // The environment that is being built
+    version: "1.2.3", // The version of the build
+    locale: "en-US", // (Optional) The locale that is being built
+    buildType: "webpack", // The type of the build (typically just webpack)
+    message: "Description of what happened"
+  }
+```
+
+#### Event Types
+
+In the status-api NSQ payload there is a field called `eventType`. The possible values that carpenterd-worker will send are:
+
+- `event` - Used for interim statuses that a user might care about, but doesn't affect/progress the overall build status
+- `error` - Used to indicate that `carpenterd-worker` encountered an error and wasn't able to queue all the builds

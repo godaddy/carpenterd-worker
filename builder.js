@@ -95,22 +95,22 @@ Builder.prototype.build = function build(spec, callback) {
         writeStream.write({
           eventType: 'event',
           message: 'Published'
-        }, () => {
-          //
-          // Cleanup?
-          // - We possibly want to reuse tarballs to prevent repeated fetching of
-          //   the same version. We might want to wait a day? or x number of hours
-          //   to do cleanup
-          // UPDATE: Due to the possible concurrent nature of builds we cant rely
-          // on trying to read a possible existing file before its done being
-          // written (referring to fetching tarballs). in the future we should
-          // look back into this optimization. It will require us to have a global
-          // cache that defines fetching state so we can cleanly wait and use the
-          // file that is already in process of downloading or the file that has
-          // already been downloaded
-          //
-          writeStream.end({ eventType: 'complete' }, this.cleanup.bind(this, paths.root, callback));
         });
+
+        //
+        // Cleanup?
+        // - We possibly want to reuse tarballs to prevent repeated fetching of
+        //   the same version. We might want to wait a day? or x number of hours
+        //   to do cleanup
+        // UPDATE: Due to the possible concurrent nature of builds we cant rely
+        // on trying to read a possible existing file before its done being
+        // written (referring to fetching tarballs). in the future we should
+        // look back into this optimization. It will require us to have a global
+        // cache that defines fetching state so we can cleanly wait and use the
+        // file that is already in process of downloading or the file that has
+        // already been downloaded
+        //
+        writeStream.end({ eventType: 'complete' }, this.cleanup.bind(this, paths.root, callback));
       });
     });
   });
