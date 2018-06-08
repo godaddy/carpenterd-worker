@@ -52,6 +52,15 @@ function Builder(opts) {
   ).unref();
 }
 
+/**
+ *
+ * @function _completeBuild
+ * @param {Error} err Publish error
+ * @param {Object} opts Build information and NSQ stream writer
+ * @param {Function} callback callback
+ * @returns {undefined}
+ * @api private
+ */
 Builder.prototype._completeBuild = function _completeBuild(err, opts, callback) {
   const { id, spec, paths, writer } = opts;
 

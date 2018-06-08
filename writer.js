@@ -1,5 +1,9 @@
 const nsqStream = require('nsq-stream');
 
+/**
+ * @constructor
+ * @param {Object} opts - options for the writer
+ */
 function Writer(opts = {}) {
   const { writer, topic, spec = {}, log } = opts;
   this.log = log;
@@ -7,6 +11,14 @@ function Writer(opts = {}) {
   this.spec = spec;
 }
 
+/**
+ * Combines the spec with status information
+ *
+ * @function buildStatusMessage
+ * @param {Object} statusInfo - Status information
+ * @returns {Object} - The combined message object
+ * @api private
+ */
 Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
   const { type: buildType, ...other } = this.spec;
   return {
@@ -16,6 +28,14 @@ Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
   };
 };
 
+/**
+ * @function _doStreamAction
+ * @param {String} action - Which stream action execute
+ * @param {Object} statusInfo - Status information
+ * @param {Function} done - Callback
+ * @returns {undefined}
+ * @api private
+ */
 Writer.prototype._doStreamAction = function _doStreamAction(action, statusInfo, done) {
   if (!this.writeStream) return done();
 
@@ -29,6 +49,13 @@ Writer.prototype._doStreamAction = function _doStreamAction(action, statusInfo, 
   this.writeStream[action](msg, done);
 };
 
+/**
+ * @function write
+ * @param {Error} err - Error object for unsuccessful actions
+ * @param {Object} statusInfo - Status information
+ * @param {Function} done - Callback
+ * @api public
+ */
 Writer.prototype.write = function write(err, statusInfo = {}, done = () => {}) {
   if (err) {
     statusInfo.eventType = 'error';
@@ -38,6 +65,12 @@ Writer.prototype.write = function write(err, statusInfo = {}, done = () => {}) {
   this._doStreamAction('write', statusInfo, done);
 };
 
+/**
+ * @function end
+ * @param {Object} statusInfo - Status information
+ * @param {Function} done - Callback
+ * @api public
+ */
 Writer.prototype.end = function end(statusInfo = {}, done = () => {}) {
   this._doStreamAction('end', statusInfo, done);
 };
