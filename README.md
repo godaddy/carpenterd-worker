@@ -44,17 +44,12 @@ See the example config `config.example.json` in this repo.
 
 **notes**
 - `nsq` config option is for a fork of [`nsq.js`][nsq.js] that has kubernetes support but otherwise has the same options.
+  - There is an additional configuration option `statusTopic` for setting the nsq topic that should be written to for status updates.
 - `assets.prefix` in the config is the bucket name for where the public CDN assets are uploaded.
-- `http` is the http port the healhcheck listens on
-- `npm-tars` the npm tarball bucket to fetch from
+- `http` is the http port the healhcheck listens on.
+- `npm-tars` the npm tarball bucket to fetch from.
 - `datastar` the configuration for cassandra that gets passed directly to [`datastar`][datastar].
 
-[carpenterd]: https://github.com/godaddy/carpenterd
-[workers-factory]: https://github.com/warehouseai/workers-factory
-[datastar]: https://github.com/godaddy/datastar
-[nsq]: http://nsq.io
-[cassandra]: http://cassandra.apache.org/
-[nsq.js]: https://github.com/jcrugzz/nsq.js/tree/addr-modify
 
 ## Status-Api
 
@@ -76,7 +71,7 @@ The NSQ payloads will be object that take the form:
 
 ```js
 {
-    eventType: "event|error", // The type of status event that occurred
+    eventType: "event|error|complete", // The type of status event that occurred
     name: "package-name",
     env: "dev", // The environment that is being built
     version: "1.2.3", // The version of the build
@@ -91,4 +86,12 @@ The NSQ payloads will be object that take the form:
 In the status-api NSQ payload there is a field called `eventType`. The possible values that carpenterd-worker will send are:
 
 - `event` - Used for interim statuses that a user might care about, but doesn't affect/progress the overall build status
+- `complete` - Used to indicate that the build is completed
 - `error` - Used to indicate that `carpenterd-worker` encountered an error and wasn't able to queue all the builds
+
+[carpenterd]: https://github.com/godaddy/carpenterd
+[workers-factory]: https://github.com/warehouseai/workers-factory
+[datastar]: https://github.com/godaddy/datastar
+[nsq]: http://nsq.io
+[cassandra]: http://cassandra.apache.org/
+[nsq.js]: https://github.com/jcrugzz/nsq.js/tree/addr-modify
