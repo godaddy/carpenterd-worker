@@ -53,43 +53,6 @@ function Builder(opts) {
 }
 
 /**
- *
- * @function _completeBuild
- * @param {Error} err Publish error
- * @param {Object} opts Build information and NSQ stream writer
- * @param {Function} callback callback
- * @returns {undefined}
- * @api private
- */
-Builder.prototype._completeBuild = function _completeBuild(err, opts, callback) {
-  const { id, spec, paths, writer } = opts;
-
-  if (err) return writer.end(err, null, callback.bind(this, err));
-
-  this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
-
-  writer.write(null, {
-    eventType: 'event',
-    message: 'published'
-  }, () => {
-    //
-    // Cleanup?
-    // - We possibly want to reuse tarballs to prevent repeated fetching of
-    //   the same version. We might want to wait a day? or x number of hours
-    //   to do cleanup
-    // UPDATE: Due to the possible concurrent nature of builds we cant rely
-    // on trying to read a possible existing file before its done being
-    // written (referring to fetching tarballs). in the future we should
-    // look back into this optimization. It will require us to have a global
-    // cache that defines fetching state so we can cleanly wait and use the
-    // file that is already in process of downloading or the file that has
-    // already been downloaded
-    //
-    writer.end({ eventType: 'complete' }, this.cleanup.bind(this, paths.root, () => callback()));
-  });
-};
-
-/**
  * Build the given specification and publish it to ceph
  *
  * @function build
@@ -115,15 +78,39 @@ Builder.prototype.build = function build(spec, callback) {
       mkdirp: this.mkdirp.bind(this, paths, writeStream),
       tarball: this.tarball.bind(this, spec, paths.tarball, writeStream),
       build: this._build.bind(this, id, spec, paths, writeStream)
-    }, (err, results) => {
-      if (err) return writeStream.end(null, callback.bind(this, err));
+    }, (error, results) => {
+      if (error) return writeStream.end({ error }, callback.bind(null, error));
 
       this.log.info('publish assets', spec);
       this.log.profile(`${id}-publish`);
       this.assets.publish(spec, results.build, (publishError) => {
         this.log.profile(`${id}-publish`, 'Publish assets time', assign({}, spec));
 
-        this._completeBuild(publishError, { id, spec, paths, writer: writeStream }, callback);
+        if (publishError) {
+          return writeStream.end({ error: publishError }, callback.bind(null, publishError));
+        }
+
+        this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
+
+        writeStream.write({
+          eventType: 'event',
+          message: 'Published'
+        }, () => {
+          //
+          // Cleanup?
+          // - We possibly want to reuse tarballs to prevent repeated fetching of
+          //   the same version. We might want to wait a day? or x number of hours
+          //   to do cleanup
+          // UPDATE: Due to the possible concurrent nature of builds we cant rely
+          // on trying to read a possible existing file before its done being
+          // written (referring to fetching tarballs). in the future we should
+          // look back into this optimization. It will require us to have a global
+          // cache that defines fetching state so we can cleanly wait and use the
+          // file that is already in process of downloading or the file that has
+          // already been downloaded
+          //
+          writeStream.end({ eventType: 'complete' }, this.cleanup.bind(this, paths.root, callback));
+        });
       });
     });
   });
@@ -225,9 +212,10 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
       next(err, results);
     });
   }, function (err) {
-    writer.write(err, {
+    writer.write({
+      error: err,
       eventType: 'event',
-      message: 'webpack build completed'
+      message: 'Webpack build completed'
     });
 
     fn(...arguments);
@@ -265,9 +253,10 @@ Builder.prototype.tarball = function tarball(spec, tarpath, writer, fn) {
         done();
       });
   }, function (err) {
-    writer.write(err, {
+    writer.write({
+      error: err,
       eventType: 'event',
-      message: 'fetched tarball'
+      message: 'Fetched tarball'
     });
 
     fn(...arguments);
@@ -288,9 +277,10 @@ Builder.prototype.mkdirp = function mkdirpp(paths, writer, next) {
   // Only need to run this on publish because its nested within root
   //
   mkdirp(paths.publish, function (err) {
-    writer.write(err, {
+    writer.write({
+      error: err,
       eventType: 'event',
-      message: 'made directory'
+      message: 'Made directory'
     });
 
     next(...arguments);

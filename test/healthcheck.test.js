@@ -26,6 +26,10 @@ describe('healthcheck.test', function () {
     preboot(app, done);
   });
 
+  after(function (done) {
+    app.http.close(done);
+  });
+
   it('should respond to healthcheck', function (done) {
     const uri = address(app, {
       pathname: '/healthcheck.html'

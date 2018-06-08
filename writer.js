@@ -21,6 +21,13 @@ function Writer(opts = {}) {
  */
 Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
   const { type: buildType, ...other } = this.spec;
+
+  if (statusInfo.error) {
+    statusInfo.eventType = 'error';
+    statusInfo.message = statusInfo.error.message;
+    delete statusInfo.error;
+  }
+
   return {
     ...statusInfo,
     ...other,
@@ -29,6 +36,8 @@ Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
 };
 
 /**
+ * Perform an action on the stream (abscracts 'write' and 'end' so they share logic)
+ *
  * @function _doStreamAction
  * @param {String} action - Which stream action execute
  * @param {Object} statusInfo - Status information
@@ -50,22 +59,20 @@ Writer.prototype._doStreamAction = function _doStreamAction(action, statusInfo, 
 };
 
 /**
+ * Write to the NSQ stream
+ *
  * @function write
- * @param {Error} err - Error object for unsuccessful actions
  * @param {Object} statusInfo - Status information
  * @param {Function} done - Callback
  * @api public
  */
-Writer.prototype.write = function write(err, statusInfo = {}, done = () => {}) {
-  if (err) {
-    statusInfo.eventType = 'error';
-    statusInfo.message = err.message;
-  }
-
+Writer.prototype.write = function write(statusInfo = {}, done = () => {}) {
   this._doStreamAction('write', statusInfo, done);
 };
 
 /**
+ * End the stream and write a final message
+ *
  * @function end
  * @param {Object} statusInfo - Status information
  * @param {Function} done - Callback

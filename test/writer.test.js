@@ -6,23 +6,22 @@ const nsqStream = require('nsq-stream');
 assume.use(require('assume-sinon'));
 
 describe('Writer', function () {
-  let sandbox, mockNsqWriter, mockWriteStream;
+  let mockNsqWriter, mockWriteStream;
 
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-    mockNsqWriter = { publish: sandbox.stub() }; // Not an accurate stub, just a placeholder
+    mockNsqWriter = { publish: sinon.stub() }; // Not an accurate stub, just a placeholder
 
     mockWriteStream = {
-      write: sandbox.stub().yields(),
-      end: sandbox.stub().yields(),
+      write: sinon.stub().yields(),
+      end: sinon.stub().yields(),
       _writableState: {}
     };
 
-    sandbox.stub(nsqStream, 'createWriteStream').returns(mockWriteStream);
+    sinon.stub(nsqStream, 'createWriteStream').returns(mockWriteStream);
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   describe('constructor', function () {
@@ -54,9 +53,16 @@ describe('Writer', function () {
 
   describe('api', function () {
     let writer, mockLog;
+    const expectedMessage = {
+      name: 'package-name',
+      env: 'dev',
+      version: '1.2.3',
+      locale: 'en-US',
+      buildType: 'webpack'
+    };
 
     beforeEach(function () {
-      mockLog = { error: sandbox.stub() };
+      mockLog = { error: sinon.stub() };
       writer = new Writer({
         writer: mockNsqWriter,
         topic: 'topic',
@@ -74,9 +80,9 @@ describe('Writer', function () {
     describe('write', function () {
       it('noops without a writeStream', function (done) {
         writer.writeStream = null;
-        sandbox.stub(writer, 'buildStatusMessage');
+        sinon.stub(writer, 'buildStatusMessage');
 
-        writer.write(null, { eventType: 'complete' }, function () {
+        writer.write({ eventType: 'complete' }, function () {
           assume(writer.buildStatusMessage).not.called();
           done();
         });
@@ -85,44 +91,35 @@ describe('Writer', function () {
       it('logs an error if the stream is no longer writable', function (done) {
         writer.writeStream._writableState.ended = true;
 
-        writer.write(null, { eventType: 'complete' }, function () {
+        writer.write({ eventType: 'complete' }, function () {
           assume(mockLog.error).calledWith('Unable to write to stream', sinon.match.object);
           done();
         });
       });
 
-      it('writes an error if it is passed an error object', function (done) {
-        writer.write(
-          new Error('Penguins are flying'),
-          {
-            eventType: 'event',
-            message: 'Penguins grounded'
-          },
-          function () {
-            assume(writer.writeStream.write).calledWith(sinon.match({
-              eventType: 'error',
-              name: 'package-name',
-              env: 'dev',
-              version: '1.2.3',
-              locale: 'en-US',
-              buildType: 'webpack',
-              message: 'Penguins are flying'
-            }), sinon.match.func);
+      it('writes an error if statusInfo contains an error', function (done) {
+        writer.write({
+          error: new Error('Penguins are flying'),
+          eventType: 'event',
+          message: 'Penguins grounded'
+        },
+        function () {
+          assume(writer.writeStream.write).calledWithMatch({
+            ...expectedMessage,
+            eventType: 'error',
+            message: 'Penguins are flying'
+          }, sinon.match.func);
 
-            done();
-          });
+          done();
+        });
       });
 
       it('writes the message to the stream', function (done) {
-        writer.write(null, { eventType: 'event' }, function () {
-          assume(writer.writeStream.write).calledWith(sinon.match({
-            eventType: 'event',
-            name: 'package-name',
-            env: 'dev',
-            version: '1.2.3',
-            locale: 'en-US',
-            buildType: 'webpack'
-          }), sinon.match.func);
+        writer.write({ eventType: 'event' }, function () {
+          assume(writer.writeStream.write).calledWithMatch({
+            ...expectedMessage,
+            eventType: 'event'
+          }, sinon.match.func);
 
           done();
         });
@@ -132,7 +129,7 @@ describe('Writer', function () {
     describe('end', function () {
       it('noops without a writeStream', function (done) {
         writer.writeStream = null;
-        sandbox.stub(writer, 'buildStatusMessage');
+        sinon.stub(writer, 'buildStatusMessage');
 
         writer.end({ eventType: 'complete' }, function () {
           assume(writer.buildStatusMessage).not.called();
@@ -151,14 +148,10 @@ describe('Writer', function () {
 
       it('ends the stream with the given message', function (done) {
         writer.end({ eventType: 'complete' }, function () {
-          assume(writer.writeStream.end).calledWith(sinon.match({
-            eventType: 'complete',
-            name: 'package-name',
-            env: 'dev',
-            version: '1.2.3',
-            locale: 'en-US',
-            buildType: 'webpack'
-          }), sinon.match.func);
+          assume(writer.writeStream.end).calledWithMatch({
+            ...expectedMessage,
+            eventType: 'complete'
+          }, sinon.match.func);
 
           done();
         });

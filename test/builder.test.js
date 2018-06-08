@@ -17,8 +17,8 @@ assume.use(require('assume-sinon'));
 describe('Builder', function () {
   this.timeout(2E5);
   let builder;
-  let sandbox;
   let app;
+
   before(function (done) {
     app = new Map();
     app.config = { get: noop };
@@ -57,12 +57,11 @@ describe('Builder', function () {
   });
 
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-    sandbox.stub(builder.assets, 'publish');
+    sinon.stub(builder.assets, 'publish');
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   after(function (done) {
@@ -73,9 +72,9 @@ describe('Builder', function () {
   describe('builder.write', function () {
     it('should not create the writer without a topic', function (done) {
       builder.assets.publish.yieldsAsync(null, null);
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(nsqStream, 'createWriteStream');
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+      sinon.stub(nsqStream, 'createWriteStream');
 
       builder.build({
         name: 'test',
@@ -91,8 +90,8 @@ describe('Builder', function () {
   describe('builder.build', function () {
     it('should successfully fetch, build and publish assets', function (done) {
       builder.assets.publish.yieldsAsync(null, null);
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
 
       builder.build({
         name: 'test',
@@ -107,8 +106,8 @@ describe('Builder', function () {
     });
 
     it('should skip building when head version equals spec version', function (done) {
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
 
       builder.build({
         name: 'test',
@@ -122,8 +121,8 @@ describe('Builder', function () {
     });
 
     it('should skip building when spec version is less than head version', function (done) {
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
 
       builder.build({
         name: 'test',
@@ -183,16 +182,25 @@ describe('Builder', function () {
     });
 
     it('should successfully publish status messages for fetch, build and publishing assets', function (done) {
+      const expectedMessage = {
+        eventType: 'event',
+        name: 'test',
+        env: 'dev',
+        version: '1.0.0',
+        locale: 'en-US',
+        buildType: 'webpack'
+      };
+
       builder.assets.publish.yieldsAsync(null, null);
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
 
       const mockWriteStream = {
-        write: sandbox.stub().yields(),
-        end: sandbox.stub().yields(),
+        write: sinon.stub().yields(),
+        end: sinon.stub().yields(),
         _writableState: {}
       };
-      sandbox.stub(nsqStream, 'createWriteStream').returns(mockWriteStream);
+      sinon.stub(nsqStream, 'createWriteStream').returns(mockWriteStream);
 
       builder.build({
         name: 'test',
@@ -203,57 +211,37 @@ describe('Builder', function () {
       }, (err) => {
 
         // mkdir
-        assume(mockWriteStream.write).calledWith(sinon.match({
-          eventType: 'event',
-          name: 'test',
-          env: 'dev',
-          version: '1.0.0',
-          locale: 'en-US',
-          buildType: 'webpack',
-          message: 'made directory'
-        }), sinon.match.func);
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Made directory'
+        }, sinon.match.func);
 
         // tarball
-        assume(mockWriteStream.write).calledWith(sinon.match({
-          eventType: 'event',
-          name: 'test',
-          env: 'dev',
-          version: '1.0.0',
-          locale: 'en-US',
-          buildType: 'webpack',
-          message: 'fetched tarball'
-        }), sinon.match.func);
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Fetched tarball'
+        }, sinon.match.func);
 
         // webpack
-        assume(mockWriteStream.write).calledWith(sinon.match({
-          eventType: 'event',
-          name: 'test',
-          env: 'dev',
-          version: '1.0.0',
-          locale: 'en-US',
-          buildType: 'webpack',
-          message: 'webpack build completed'
-        }), sinon.match.func);
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Webpack build completed'
+        }, sinon.match.func);
 
         // published
-        assume(mockWriteStream.write).calledWith(sinon.match({
-          eventType: 'event',
-          name: 'test',
-          env: 'dev',
-          version: '1.0.0',
-          locale: 'en-US',
-          buildType: 'webpack',
-          message: 'published'
-        }), sinon.match.func);
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Published'
+        }, sinon.match.func);
 
-        assume(mockWriteStream.end).calledWith(sinon.match({
+        assume(mockWriteStream.end).calledWithMatch({
           eventType: 'complete',
           name: 'test',
           env: 'dev',
           version: '1.0.0',
           locale: 'en-US',
           buildType: 'webpack'
-        }), sinon.match.func);
+        }, sinon.match.func);
 
         done(err);
       });
