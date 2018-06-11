@@ -87,7 +87,7 @@ In the status-api NSQ payload there is a field called `eventType`. The possible 
 
 - `event` - Used for interim statuses that a user might care about, but doesn't affect/progress the overall build status
 - `complete` - Used to indicate that the build is completed
-- `error` - Used to indicate that `carpenterd-worker` encountered an error and wasn't able to queue all the builds
+- `error` - Used to indicate that `carpenterd-worker` encountered an error and wasn't able to complete the build
 
 [carpenterd]: https://github.com/godaddy/carpenterd
 [workers-factory]: https://github.com/warehouseai/workers-factory

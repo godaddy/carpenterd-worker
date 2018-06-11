@@ -25,6 +25,7 @@ Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
   if (statusInfo.error) {
     statusInfo.eventType = 'error';
     statusInfo.message = statusInfo.error.message;
+    statusInfo.output = statusInfo.error.output;
     delete statusInfo.error;
   }
 
