@@ -18,10 +18,14 @@ module.exports = function nsqboot(app, next) {
   };
   app.nsq = {};
   app.nsq.reader = nsq.reader(config);
+  app.nsq.writer = nsq.writer(config);
+
   app.nsq.stream = nsqStream.createReadStream(app.nsq.reader);
 
   app.nsq.reader.on('error', app.log.error.bind(app.log));
   app.nsq.reader.on('error response', app.log.error.bind(app.log));
+  app.nsq.writer.on('error', app.log.error.bind(app.log));
+  app.nsq.writer.on('error response', app.log.error.bind(app.log));
 
   next();
 };

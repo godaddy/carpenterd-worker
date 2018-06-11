@@ -15,6 +15,10 @@ module.exports = function worker(err, app) {
     pkgcloud: app.config.get('npm-tars:pkgcloud'),
     assets: app.config.get('assets'),
     env: app.config.get('env'),
+    status: {
+      writer: app.nsq.writer,
+      topic: app.config.get('nsq:statusTopic')
+    },
     paths: app.paths
   });
 

@@ -1,4 +1,4 @@
-/* eslint-disable max-nested-callbacks */
+/* eslint-disable max-nested-callbacks, no-process-env */
 const Builder = require('../builder');
 const fs = require('fs');
 const uuid = require('uuid');
@@ -9,14 +9,16 @@ const os = require('os');
 const path = require('path');
 const noop = function () {};
 const fixtures = require('./fixtures');
+const Writer = require('../writer');
+const nsqStream = require('nsq-stream');
 
 assume.use(require('assume-sinon'));
 
 describe('Builder', function () {
   this.timeout(2E5);
   let builder;
-  let sandbox;
   let app;
+
   before(function (done) {
     app = new Map();
     app.config = { get: noop };
@@ -55,12 +57,11 @@ describe('Builder', function () {
   });
 
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-    sandbox.stub(builder.assets, 'publish');
+    sinon.stub(builder.assets, 'publish');
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   after(function (done) {
@@ -68,11 +69,29 @@ describe('Builder', function () {
     app.datastar.close(done);
   });
 
+  describe('builder.write', function () {
+    it('should not create the writer without a topic', function (done) {
+      builder.assets.publish.yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+      sinon.stub(nsqStream, 'createWriteStream');
+
+      builder.build({
+        name: 'test',
+        version: '1.0.0',
+        env: 'dev'
+      }, (err) => {
+        assume(nsqStream.createWriteStream).is.not.called();
+        done(err);
+      });
+    });
+  });
+
   describe('builder.build', function () {
     it('should successfully fetch, build and publish assets', function (done) {
       builder.assets.publish.yieldsAsync(null, null);
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
 
       builder.build({
         name: 'test',
@@ -87,8 +106,8 @@ describe('Builder', function () {
     });
 
     it('should skip building when head version equals spec version', function (done) {
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
 
       builder.build({
         name: 'test',
@@ -102,8 +121,8 @@ describe('Builder', function () {
     });
 
     it('should skip building when spec version is less than head version', function (done) {
-      sandbox.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sandbox.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
 
       builder.build({
         name: 'test',
@@ -123,10 +142,10 @@ describe('Builder', function () {
       builder.tarball({
         name: 'test',
         version: '1.0.0'
-      }, tarpath, (err) => {
+      }, tarpath, new Writer(), (err) => {
         assume(err).is.falsey();
-        fs.stat(tarpath, (err) => {
-          assume(err).is.falsey();
+        fs.stat(tarpath, (statErr) => {
+          assume(statErr).is.falsey();
           done();
         });
       });
@@ -136,6 +155,96 @@ describe('Builder', function () {
   describe('build.purge', function () {
     it('should run successfully', function (done) {
       builder.purge(done);
+    });
+  });
+
+  describe('status messsages', function () {
+    before(function () {
+      builder = new Builder({
+        log: { info: noop, error: noop, profile: noop },
+        paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
+        datastar: app.datastar,
+        models: app.models,
+        bucket: process.env.AWS_BUCKET,
+        pkgcloud: {
+          provider: 'amazon',
+          endpoint: 's3.amazonaws.com',
+          keyId: process.env.AWS_KEY_ID,
+          key: process.env.AWS_KEY,
+          forcePathBucket: true
+        },
+        concurrency: 1,
+        status: {
+          writer: {},
+          topic: 'status'
+        }
+      });
+    });
+
+    it('should successfully publish status messages for fetch, build and publishing assets', function (done) {
+      const expectedMessage = {
+        eventType: 'event',
+        name: 'test',
+        env: 'dev',
+        version: '1.0.0',
+        locale: 'en-US',
+        buildType: 'webpack'
+      };
+
+      builder.assets.publish.yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+
+      const mockWriteStream = {
+        write: sinon.stub().yields(),
+        end: sinon.stub().yields(),
+        _writableState: {}
+      };
+      sinon.stub(nsqStream, 'createWriteStream').returns(mockWriteStream);
+
+      builder.build({
+        name: 'test',
+        version: '1.0.0',
+        env: 'dev',
+        locale: 'en-US',
+        type: 'webpack'
+      }, (err) => {
+
+        // mkdir
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Made directory'
+        }, sinon.match.func);
+
+        // tarball
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Fetched tarball'
+        }, sinon.match.func);
+
+        // webpack
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Webpack build completed'
+        }, sinon.match.func);
+
+        // published
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'Published'
+        }, sinon.match.func);
+
+        assume(mockWriteStream.end).calledWithMatch({
+          eventType: 'complete',
+          name: 'test',
+          env: 'dev',
+          version: '1.0.0',
+          locale: 'en-US',
+          buildType: 'webpack'
+        }, sinon.match.func);
+
+        done(err);
+      });
     });
   });
 });
