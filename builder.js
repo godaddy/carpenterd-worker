@@ -30,7 +30,7 @@ module.exports = Builder;
  * @constructor
  * @param {Object} opts - options for the builder
  */
-function Builder(opts) {
+function Builder(opts = {}) {
   this.log = opts.log;
   this.bucket = opts.bucket;
   this.pkgcloud = pkgcloud.storage.createClient(
@@ -45,10 +45,13 @@ function Builder(opts) {
   this.conc = opts.concurrency || 2;
   this._paths = opts.paths;
   this.status = opts.status || {};
+  this._purge = opts.purge || {};
+  this._purge.interval = this._purge.interval || ms('1hour');
+  this._purge.age = this._purge.age || ms('40min');
 
   if (opts.env !== 'development') setInterval(
     this.purge.bind(this),
-    ms('1hour')
+    this._purge.interval
   ).unref();
 }
 
@@ -72,6 +75,9 @@ Builder.prototype.build = function build(spec, callback) {
   //
   // Check to see if we actually need to run this build
   //
+  const cleanup = () => {
+    this.cleanup(paths.root, () => this.log.info(`Remove dir ${paths.root} ok`));
+  };
   this.check(id, spec, (checkError) => {
     if (checkError && checkError.skip) return callback();
     async.series({
@@ -87,6 +93,7 @@ Builder.prototype.build = function build(spec, callback) {
         this.log.profile(`${id}-publish`, 'Publish assets time', assign({}, spec));
 
         if (publishError) {
+          cleanup();
           return writeStream.end({ error: publishError }, callback.bind(null, publishError));
         }
 
@@ -110,7 +117,8 @@ Builder.prototype.build = function build(spec, callback) {
         // file that is already in process of downloading or the file that has
         // already been downloaded
         //
-        writeStream.end({ eventType: 'complete' }, this.cleanup.bind(this, paths.root, callback));
+        cleanup();
+        writeStream.end({ eventType: 'complete' }, callback);
       });
     });
   });
@@ -322,7 +330,7 @@ Builder.prototype.paths = function paths(spec, uid) {
  */
 Builder.prototype.purge = function purge(done) {
   const self = this;
-  const age = ms('4hours'); // this could be configured
+  const age = this._purge.age; // this could be configured
   const target = this._paths.root;
 
   function finish(err, message) {

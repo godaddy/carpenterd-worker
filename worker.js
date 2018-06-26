@@ -14,6 +14,7 @@ module.exports = function worker(err, app) {
     bucket: app.config.get('npm-tars:bucket'),
     pkgcloud: app.config.get('npm-tars:pkgcloud'),
     assets: app.config.get('assets'),
+    purge: app.config.get('purge'),
     env: app.config.get('env'),
     status: {
       writer: app.nsq.writer,
