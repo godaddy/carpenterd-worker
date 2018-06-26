@@ -4,7 +4,7 @@ const nsqStream = require('nsq-stream');
 module.exports = function nsqboot(app, next) {
   const config = Object.assign({}, app.get('nsq'), app.config.get('nsq'));
   if (Object.keys(config).length === 0) return next();
-
+  const opts = app.config.get('nsq-stream');
   //
   // NSQLOOKUPD doesnt quite get it right when fetching hosts.
   // We manually add the full DNS extension so the given hostname works in
@@ -20,7 +20,7 @@ module.exports = function nsqboot(app, next) {
   app.nsq.reader = nsq.reader(config);
   app.nsq.writer = nsq.writer(config);
 
-  app.nsq.stream = nsqStream.createReadStream(app.nsq.reader);
+  app.nsq.stream = nsqStream.createReadStream(app.nsq.reader, opts);
 
   app.nsq.reader.on('error', app.log.error.bind(app.log));
   app.nsq.reader.on('error response', app.log.error.bind(app.log));
