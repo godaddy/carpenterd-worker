@@ -121,7 +121,7 @@ Builder.prototype.build = function build(spec, callback) {
 
         writeStream.end({
           eventType: 'complete',
-          message: 'Assets build completed'
+          message: 'carpenterd-worker build completed'
         }, callback);
       });
     });
