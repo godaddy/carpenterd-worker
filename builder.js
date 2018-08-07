@@ -118,7 +118,10 @@ Builder.prototype.build = function build(spec, callback) {
         // already been downloaded
         //
         cleanup();
-        writeStream.end({ eventType: 'complete', message: 'Assets build completed' }, callback);
+        writeStream.end({
+          eventType: 'complete',
+          message: 'Assets build completed'
+        }, callback);
       });
     });
   });
