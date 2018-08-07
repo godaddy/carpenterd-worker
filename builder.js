@@ -46,8 +46,8 @@ function Builder(opts = {}) {
   this._paths = opts.paths;
   this.status = opts.status || {};
   this._purge = opts.purge || {};
-  this._purge.interval = this._purge.interval || ms('1hour');
-  this._purge.age = this._purge.age || ms('40min');
+  this._purge.interval = this._purge.interval || ms('30min');
+  this._purge.age = this._purge.age || ms('20min');
 
   if (opts.env !== 'development') setInterval(
     this.purge.bind(this),
@@ -101,7 +101,7 @@ Builder.prototype.build = function build(spec, callback) {
 
         writeStream.write({
           eventType: 'event',
-          message: 'Published'
+          message: 'Assets published'
         });
 
         //
@@ -118,7 +118,10 @@ Builder.prototype.build = function build(spec, callback) {
         // already been downloaded
         //
         cleanup();
-        writeStream.end({ eventType: 'complete' }, callback);
+        writeStream.end({
+          eventType: 'complete',
+          message: 'Assets build completed'
+        }, callback);
       });
     });
   });
@@ -190,6 +193,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
   // TODO: refactor workers-factory to have sane options
   //
   const type = spec.type || 'webpack';
+
   const logId = `${id}-${type}-build`;
   const opts = {
     id: id,
@@ -210,7 +214,10 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
       WRHS_LOCALE: spec.locale
     })
   };
-
+  writer.write({
+    eventType: 'event',
+    message: `${type} build start`
+  });
   const factory = workers[type];
   const op = retry.op(this.retry);
   return void op.attempt(next => {
@@ -223,7 +230,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
     writer.write({
       error: err,
       eventType: 'event',
-      message: 'Webpack build completed'
+      message: `${type} build completed`
     });
 
     fn(...arguments);
@@ -284,15 +291,7 @@ Builder.prototype.mkdirp = function mkdirpp(paths, writer, next) {
   //
   // Only need to run this on publish because its nested within root
   //
-  mkdirp(paths.publish, function (err) {
-    writer.write({
-      error: err,
-      eventType: 'event',
-      message: 'Made directory'
-    });
-
-    next(...arguments);
-  });
+  mkdirp(paths.publish, next);
 };
 
 /**
