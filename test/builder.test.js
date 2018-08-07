@@ -237,7 +237,7 @@ describe('Builder', function () {
 
         assume(mockWriteStream.end).calledWithMatch({
           eventType: 'complete',
-          message: 'Assets build completed',
+          message: 'carpenterd-worker build completed',
           name: 'test',
           env: 'dev',
           version: '1.0.0',
