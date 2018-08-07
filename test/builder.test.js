@@ -210,11 +210,6 @@ describe('Builder', function () {
         type: 'webpack'
       }, (err) => {
 
-        // mkdir
-        assume(mockWriteStream.write).calledWithMatch({
-          ...expectedMessage,
-          message: 'Made directory'
-        }, sinon.match.func);
 
         // tarball
         assume(mockWriteStream.write).calledWithMatch({
@@ -222,20 +217,27 @@ describe('Builder', function () {
           message: 'Fetched tarball'
         }, sinon.match.func);
 
-        // webpack
+        // webpack start
         assume(mockWriteStream.write).calledWithMatch({
           ...expectedMessage,
-          message: 'Webpack build completed'
+          message: 'webpack build start'
+        }, sinon.match.func);
+
+        // webpack complete
+        assume(mockWriteStream.write).calledWithMatch({
+          ...expectedMessage,
+          message: 'webpack build completed'
         }, sinon.match.func);
 
         // published
         assume(mockWriteStream.write).calledWithMatch({
           ...expectedMessage,
-          message: 'Published'
+          message: 'Assets published'
         }, sinon.match.func);
 
         assume(mockWriteStream.end).calledWithMatch({
           eventType: 'complete',
+          message: 'Assets build completed',
           name: 'test',
           env: 'dev',
           version: '1.0.0',

@@ -118,7 +118,7 @@ Builder.prototype.build = function build(spec, callback) {
         // already been downloaded
         //
         cleanup();
-        writeStream.end({ eventType: 'complete', message: 'Build Completed' }, callback);
+        writeStream.end({ eventType: 'complete', message: 'Assets build completed' }, callback);
       });
     });
   });
@@ -213,7 +213,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
   };
   writer.write({
     eventType: 'event',
-    message: `${type}'build start`
+    message: `${type} build start`
   });
   const factory = workers[type];
   const op = retry.op(this.retry);
