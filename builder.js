@@ -118,6 +118,7 @@ Builder.prototype.build = function build(spec, callback) {
         // already been downloaded
         //
         cleanup();
+
         writeStream.end({
           eventType: 'complete',
           message: 'Assets build completed'
@@ -214,6 +215,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
       WRHS_LOCALE: spec.locale
     })
   };
+
   writer.write({
     eventType: 'event',
     message: `${type} build start`
