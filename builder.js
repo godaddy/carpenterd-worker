@@ -147,7 +147,7 @@ Builder.prototype.check = function (id, spec, next) {
     // We should still try and build even if it errors
     if (err) return next();
     // If there is no build we definitely need to run it
-    if (!head) return next();
+    if (!head || !head.version) return next();
     // If the build already exists then skip it
     if (head.version === spec.version) return next(failure('equal versions', { skip: true }));
 

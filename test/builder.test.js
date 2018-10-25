@@ -105,6 +105,23 @@ describe('Builder', function () {
       });
     });
 
+    it('should successfully fetch, build and publish assets', function (done) {
+      builder.assets.publish.yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, {});
+
+      builder.build({
+        name: 'test',
+        version: '1.0.0',
+        env: 'dev'
+      }, (err) => {
+        assume(err).is.falsey();
+        assume(builder.assets.publish).is.called(1);
+        assume(builder.assets.publish).is.calledWith(sinon.match.object, sinon.match.object, sinon.match.func);
+        done();
+      });
+    });
+
     it('should skip building when head version equals spec version', function (done) {
       sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
       sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
