@@ -1,3 +1,4 @@
+const { performance } = require('perf_hooks');
 const nsqStream = require('nsq-stream');
 
 /**
@@ -9,7 +10,15 @@ function Writer(opts = {}) {
   this.log = log;
   this.writeStream = writer && topic && nsqStream.createWriteStream(writer, topic);
   this.spec = spec;
+  this.timings = new Map();
 }
+
+Writer.prototype.timerStart = function timerStart(key, ...rest) {
+  this.timings.set(key, performance.now());
+  if (rest && rest.length > 0) {
+    this.write(null, ...rest);
+  }
+};
 
 /**
  * Combines the spec with status information
@@ -19,7 +28,7 @@ function Writer(opts = {}) {
  * @returns {Object} - The combined message object
  * @api private
  */
-Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
+Writer.prototype.buildStatusMessage = function buildStatusMessage(key, statusInfo) {
   const { type: buildType, ...other } = this.spec;
 
   if (statusInfo.error) {
@@ -27,6 +36,11 @@ Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
     statusInfo.message = statusInfo.error.message;
     statusInfo.details = statusInfo.error.output;
     delete statusInfo.error;
+  }
+
+  if (key) {
+    other.timing = performance.now() - this.timings.get(key);
+    this.timings.delete(key);
   }
 
   return {
@@ -46,10 +60,10 @@ Writer.prototype.buildStatusMessage = function buildStatusMessage(statusInfo) {
  * @returns {undefined}
  * @api private
  */
-Writer.prototype._doStreamAction = function _doStreamAction(action, statusInfo, done) {
+Writer.prototype._doStreamAction = function _doStreamAction(action, key, statusInfo, done) {
   if (!this.writeStream) return done();
 
-  const msg = this.buildStatusMessage(statusInfo);
+  const msg = this.buildStatusMessage(key, statusInfo);
 
   if (this.writeStream._writableState.ended) {
     this.log.error(`Unable to ${action === 'write' ? 'write to' : action} stream`, msg);
@@ -67,8 +81,8 @@ Writer.prototype._doStreamAction = function _doStreamAction(action, statusInfo, 
  * @param {Function} done - Callback
  * @api public
  */
-Writer.prototype.write = function write(statusInfo = {}, done = () => {}) {
-  this._doStreamAction('write', statusInfo, done);
+Writer.prototype.write = function write(key, statusInfo = {}, done = () => {}) {
+  this._doStreamAction('write', key, statusInfo, done);
 };
 
 /**
@@ -79,8 +93,8 @@ Writer.prototype.write = function write(statusInfo = {}, done = () => {}) {
  * @param {Function} done - Callback
  * @api public
  */
-Writer.prototype.end = function end(statusInfo = {}, done = () => {}) {
-  this._doStreamAction('end', statusInfo, done);
+Writer.prototype.end = function end(key, statusInfo = {}, done = () => {}) {
+  this._doStreamAction('end', key, statusInfo, done);
 };
 
 module.exports = Writer;

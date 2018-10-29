@@ -78,6 +78,8 @@ Builder.prototype.build = function build(spec, callback) {
   const cleanup = () => {
     this.cleanup(paths.root, () => this.log.info(`Remove dir ${paths.root} ok`));
   };
+  const statusKey = 'build';
+  writeStream.timerStart(statusKey);
   this.check(id, spec, (checkError) => {
     if (checkError && checkError.skip) return callback();
     async.series({
@@ -85,21 +87,23 @@ Builder.prototype.build = function build(spec, callback) {
       tarball: this.tarball.bind(this, spec, paths.tarball, writeStream),
       build: this._build.bind(this, id, spec, paths, writeStream)
     }, (error, results) => {
-      if (error) return writeStream.end({ error }, callback.bind(null, error));
+      if (error) return writeStream.end(statusKey, { error }, callback.bind(null, error));
 
+      const publishKey = 'Publish assets';
       this.log.info('publish assets', spec);
       this.log.profile(`${id}-publish`);
+      writeStream.timerStart(publishKey);
       this.assets.publish(spec, results.build, (publishError) => {
         this.log.profile(`${id}-publish`, 'Publish assets time', assign({}, spec));
 
         if (publishError) {
           cleanup();
-          return writeStream.end({ error: publishError }, callback.bind(null, publishError));
+          return writeStream.end(publishKey, { error: publishError }, callback.bind(null, publishError));
         }
 
         this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
 
-        writeStream.write({
+        writeStream.write(publishKey, {
           eventType: 'event',
           message: 'Assets published'
         });
@@ -119,7 +123,7 @@ Builder.prototype.build = function build(spec, callback) {
         //
         cleanup();
 
-        writeStream.end({
+        writeStream.end(statusKey, {
           eventType: 'complete',
           message: 'carpenterd-worker build completed'
         }, callback);
@@ -194,6 +198,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
   // TODO: refactor workers-factory to have sane options
   //
   const type = spec.type || 'webpack';
+  const statusKey = 'build';
 
   const logId = `${id}-${type}-build`;
   const opts = {
@@ -216,7 +221,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
     })
   };
 
-  writer.write({
+  writer.timerStart(statusKey, {
     eventType: 'event',
     message: `${type} build start`
   });
@@ -229,7 +234,7 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
       next(err, results);
     });
   }, function (err) {
-    writer.write({
+    writer.write(statusKey, {
       error: err,
       eventType: 'event',
       message: `${type} build completed`
@@ -251,6 +256,8 @@ Builder.prototype._build = function _build(id, spec, paths, writer, fn) { // esl
  * @api private
  */
 Builder.prototype.tarball = function tarball(spec, tarpath, writer, fn) {
+  const statusKey = 'tarball';
+  writer.timerStart(statusKey);
   const op = retry.op(this.retry);
   return void op.attempt(next => {
     const done = once(next);
@@ -270,7 +277,7 @@ Builder.prototype.tarball = function tarball(spec, tarpath, writer, fn) {
         done();
       });
   }, function (err) {
-    writer.write({
+    writer.write(statusKey, {
       error: err,
       eventType: 'event',
       message: 'Fetched tarball'
