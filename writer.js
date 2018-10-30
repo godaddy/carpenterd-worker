@@ -13,6 +13,11 @@ function Writer(opts = {}) {
   this.timings = new Map();
 }
 
+/**
+ * Starts a timer for the given key, if additional arguments are provided, also writes a status message
+ * @param {String} key - Timing key to associate with the timer
+ * @param {...Any} rest - Additional arguments used to call write (not including a timer key)
+ */
 Writer.prototype.timerStart = function timerStart(key, ...rest) {
   this.timings.set(key, performance.now());
   if (rest && rest.length > 0) {
@@ -24,6 +29,8 @@ Writer.prototype.timerStart = function timerStart(key, ...rest) {
  * Combines the spec with status information
  *
  * @function buildStatusMessage
+ * @param {String?} key - Timing key to use, if one exists, timing information will
+ * be added to the status message
  * @param {Object} statusInfo - Status information
  * @returns {Object} - The combined message object
  * @api private
@@ -55,6 +62,8 @@ Writer.prototype.buildStatusMessage = function buildStatusMessage(key, statusInf
  *
  * @function _doStreamAction
  * @param {String} action - Which stream action execute
+ * @param {String?} key - Timing key to use, if one exists, timing information will
+ * be added to the status message
  * @param {Object} statusInfo - Status information
  * @param {Function} done - Callback
  * @returns {undefined}
@@ -77,6 +86,8 @@ Writer.prototype._doStreamAction = function _doStreamAction(action, key, statusI
  * Write to the NSQ stream
  *
  * @function write
+ * @param {String?} key - Timing key to use, if one exists, timing information will
+ * be added to the status message
  * @param {Object} statusInfo - Status information
  * @param {Function} done - Callback
  * @api public
@@ -89,6 +100,8 @@ Writer.prototype.write = function write(key, statusInfo = {}, done = () => {}) {
  * End the stream and write a final message
  *
  * @function end
+ * @param {String?} key - Timing key to use, if one exists, timing information will
+ * be added to the status message
  * @param {Object} statusInfo - Status information
  * @param {Function} done - Callback
  * @api public

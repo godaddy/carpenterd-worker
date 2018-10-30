@@ -116,7 +116,7 @@ describe('Writer', function () {
       });
 
       it('writes an error if statusInfo contains an error with timing information', function (done) {
-        writer.timings.set('forever', performance.now() - 20)
+        writer.timings.set('forever', performance.now() - 20);
         writer.write('forever', {
           error: new Error('Penguins are flying'),
           eventType: 'event',
@@ -146,7 +146,7 @@ describe('Writer', function () {
       });
 
       it('writes the message to the stream with timing information', function (done) {
-        writer.timings.set('forever', performance.now() - 20)
+        writer.timings.set('forever', performance.now() - 20);
         writer.write('forever', { eventType: 'event' }, function () {
           assume(writer.writeStream.write).calledWithMatch({
             ...expectedMessage,
@@ -191,7 +191,7 @@ describe('Writer', function () {
       });
 
       it('ends the stream with timing information', function (done) {
-        writer.timings.set('forever', performance.now() - 20)
+        writer.timings.set('forever', performance.now() - 20);
         writer.end('forever', { eventType: 'complete' }, function () {
           assume(writer.writeStream.end).calledWithMatch({
             ...expectedMessage,
