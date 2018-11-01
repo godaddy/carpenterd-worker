@@ -3,6 +3,7 @@ const Writer = require('../writer');
 const assume = require('assume');
 const sinon = require('sinon');
 const nsqStream = require('nsq-stream');
+const { performance } = require('perf_hooks');
 assume.use(require('assume-sinon'));
 
 describe('Writer', function () {
@@ -82,7 +83,7 @@ describe('Writer', function () {
         writer.writeStream = null;
         sinon.stub(writer, 'buildStatusMessage');
 
-        writer.write({ eventType: 'complete' }, function () {
+        writer.write(null, { eventType: 'complete' }, function () {
           assume(writer.buildStatusMessage).not.called();
           done();
         });
@@ -91,14 +92,14 @@ describe('Writer', function () {
       it('logs an error if the stream is no longer writable', function (done) {
         writer.writeStream._writableState.ended = true;
 
-        writer.write({ eventType: 'complete' }, function () {
+        writer.write(null, { eventType: 'complete' }, function () {
           assume(mockLog.error).calledWith('Unable to write to stream', sinon.match.object);
           done();
         });
       });
 
       it('writes an error if statusInfo contains an error', function (done) {
-        writer.write({
+        writer.write(null, {
           error: new Error('Penguins are flying'),
           eventType: 'event',
           message: 'Penguins grounded'
@@ -114,11 +115,43 @@ describe('Writer', function () {
         });
       });
 
+      it('writes an error if statusInfo contains an error with timing information', function (done) {
+        writer.timings.set('forever', performance.now() - 20);
+        writer.write('forever', {
+          error: new Error('Penguins are flying'),
+          eventType: 'event',
+          message: 'Penguins grounded'
+        },
+        function () {
+          assume(writer.writeStream.write).calledWithMatch({
+            ...expectedMessage,
+            eventType: 'error',
+            message: 'Penguins are flying',
+            timing: sinon.match.number
+          }, sinon.match.func);
+
+          done();
+        });
+      });
+
       it('writes the message to the stream', function (done) {
-        writer.write({ eventType: 'event' }, function () {
+        writer.write(null, { eventType: 'event' }, function () {
           assume(writer.writeStream.write).calledWithMatch({
             ...expectedMessage,
             eventType: 'event'
+          }, sinon.match.func);
+
+          done();
+        });
+      });
+
+      it('writes the message to the stream with timing information', function (done) {
+        writer.timings.set('forever', performance.now() - 20);
+        writer.write('forever', { eventType: 'event' }, function () {
+          assume(writer.writeStream.write).calledWithMatch({
+            ...expectedMessage,
+            eventType: 'event',
+            timing: sinon.match.number
           }, sinon.match.func);
 
           done();
@@ -131,7 +164,7 @@ describe('Writer', function () {
         writer.writeStream = null;
         sinon.stub(writer, 'buildStatusMessage');
 
-        writer.end({ eventType: 'complete' }, function () {
+        writer.end(null, { eventType: 'complete' }, function () {
           assume(writer.buildStatusMessage).not.called();
           done();
         });
@@ -140,17 +173,30 @@ describe('Writer', function () {
       it('logs an error if the stream is no longer writable', function (done) {
         writer.writeStream._writableState.ended = true;
 
-        writer.end({ eventType: 'complete' }, function () {
+        writer.end(null, { eventType: 'complete' }, function () {
           assume(mockLog.error).calledWith('Unable to end stream', sinon.match.object);
           done();
         });
       });
 
       it('ends the stream with the given message', function (done) {
-        writer.end({ eventType: 'complete' }, function () {
+        writer.end(null, { eventType: 'complete' }, function () {
           assume(writer.writeStream.end).calledWithMatch({
             ...expectedMessage,
             eventType: 'complete'
+          }, sinon.match.func);
+
+          done();
+        });
+      });
+
+      it('ends the stream with timing information', function (done) {
+        writer.timings.set('forever', performance.now() - 20);
+        writer.end('forever', { eventType: 'complete' }, function () {
+          assume(writer.writeStream.end).calledWithMatch({
+            ...expectedMessage,
+            eventType: 'complete',
+            timing: sinon.match.number
           }, sinon.match.func);
 
           done();
