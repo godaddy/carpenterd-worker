@@ -51,6 +51,19 @@ See the example config `config.example.json` in this repo.
 - `datastar` the configuration for cassandra that gets passed directly to [`datastar`][datastar].
 
 
+## Build Options
+### promote
+When work is queued with `carpenterd-worker` it can optionally be marked to disable build promotion. Normally when a build completes it is marked as the build-head.  Meaning it will be the build that is used for the given environment for that package. If the status message used to queue the build contains
+
+```json
+{
+  ...otherProperties,
+  "promote": false
+}
+```
+
+Then it will be built _only_ and not promoted / served for the given environment.
+
 ## Status-Api
 
 Carpenterd-worker supports posting messages to the [warehouse.ai] status-api via NSQ.

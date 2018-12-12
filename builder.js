@@ -14,6 +14,7 @@ const fs = require('fs');
 const retry = require('retryme');
 const ms = require('millisecond');
 const Writer = require('./writer');
+const rip = require('rip-out');
 
 // short -> long
 const envs = new Map([
@@ -65,6 +66,8 @@ function Builder(opts = {}) {
  */
 Builder.prototype.build = function build(spec, callback) {
   this.log.info('Received message', spec);
+  const promote = spec.promote !== false;
+  spec = rip(spec, 'promote');
   const id = uuid();
   const paths = this.paths(spec, id);
 
@@ -93,41 +96,45 @@ Builder.prototype.build = function build(spec, callback) {
       this.log.info('publish assets', spec);
       this.log.profile(`${id}-publish`);
       writeStream.timerStart(publishKey);
-      this.assets.publish(spec, results.build, (publishError) => {
-        this.log.profile(`${id}-publish`, 'Publish assets time', assign({}, spec));
 
-        if (publishError) {
+      this.assets.publish(
+        spec,
+        Object.assign({ promote }, results.build),
+        (publishError) => {
+          this.log.profile(`${id}-publish`, 'Publish assets time', assign({}, spec));
+
+          if (publishError) {
+            cleanup();
+            return writeStream.end(publishKey, { error: publishError }, callback.bind(null, publishError));
+          }
+
+          this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
+
+          writeStream.write(publishKey, {
+            eventType: 'event',
+            message: 'Assets published'
+          });
+
+          //
+          // Cleanup?
+          // - We possibly want to reuse tarballs to prevent repeated fetching of
+          //   the same version. We might want to wait a day? or x number of hours
+          //   to do cleanup
+          // UPDATE: Due to the possible concurrent nature of builds we cant rely
+          // on trying to read a possible existing file before its done being
+          // written (referring to fetching tarballs). in the future we should
+          // look back into this optimization. It will require us to have a global
+          // cache that defines fetching state so we can cleanly wait and use the
+          // file that is already in process of downloading or the file that has
+          // already been downloaded
+          //
           cleanup();
-          return writeStream.end(publishKey, { error: publishError }, callback.bind(null, publishError));
-        }
 
-        this.log.profile(`${id}-init`, 'Total execution time', assign({}, spec));
-
-        writeStream.write(publishKey, {
-          eventType: 'event',
-          message: 'Assets published'
+          writeStream.end(statusKey, {
+            eventType: 'complete',
+            message: 'carpenterd-worker build completed'
+          }, callback);
         });
-
-        //
-        // Cleanup?
-        // - We possibly want to reuse tarballs to prevent repeated fetching of
-        //   the same version. We might want to wait a day? or x number of hours
-        //   to do cleanup
-        // UPDATE: Due to the possible concurrent nature of builds we cant rely
-        // on trying to read a possible existing file before its done being
-        // written (referring to fetching tarballs). in the future we should
-        // look back into this optimization. It will require us to have a global
-        // cache that defines fetching state so we can cleanly wait and use the
-        // file that is already in process of downloading or the file that has
-        // already been downloaded
-        //
-        cleanup();
-
-        writeStream.end(statusKey, {
-          eventType: 'complete',
-          message: 'carpenterd-worker build completed'
-        }, callback);
-      });
     });
   });
 };

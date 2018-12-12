@@ -88,7 +88,7 @@ describe('Builder', function () {
   });
 
   describe('builder.build', function () {
-    it('should successfully fetch, build and publish assets', function (done) {
+    it('should successfully fetch, build and publish assets with implicit promotion', function (done) {
       builder.assets.publish.yieldsAsync(null, null);
       sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
       sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
@@ -100,7 +100,55 @@ describe('Builder', function () {
       }, (err) => {
         assume(err).is.falsey();
         assume(builder.assets.publish).is.called(1);
-        assume(builder.assets.publish).is.calledWith(sinon.match.object, sinon.match.object, sinon.match.func);
+        assume(builder.assets.publish).is.calledWithMatch({
+          name: 'test',
+          version: '1.0.0',
+          env: 'dev'
+        }, { promote: true }, sinon.match.func);
+        done();
+      });
+    });
+
+    it('should successfully fetch, build and publish assets with explicit promotion', function (done) {
+      builder.assets.publish.yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+
+      builder.build({
+        name: 'test',
+        version: '1.0.0',
+        env: 'dev',
+        promote: true
+      }, (err) => {
+        assume(err).is.falsey();
+        assume(builder.assets.publish).is.called(1);
+        assume(builder.assets.publish).is.calledWithMatch({
+          name: 'test',
+          version: '1.0.0',
+          env: 'dev'
+        }, { promote: true }, sinon.match.func);
+        done();
+      });
+    });
+
+    it('should successfully fetch, build and publish assets without promotion', function (done) {
+      builder.assets.publish.yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, null);
+
+      builder.build({
+        name: 'test',
+        version: '1.0.0',
+        env: 'dev',
+        promote: false
+      }, (err) => {
+        assume(err).is.falsey();
+        assume(builder.assets.publish).is.called(1);
+        assume(builder.assets.publish).is.calledWithMatch({
+          name: 'test',
+          version: '1.0.0',
+          env: 'dev'
+        }, { promote: false }, sinon.match.func);
         done();
       });
     });
