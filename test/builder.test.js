@@ -182,6 +182,44 @@ describe('Builder', function () {
         done();
       });
     });
+
+    it('should should return an error when there is no version specified', function (done) {
+      builder.assets.publish.yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
+
+      builder.build({
+        name: 'test',
+        // explicitly not setting version
+        env: 'dev'
+      }, (err) => {
+        assume(err).is.truthy();
+        assume(err.message).equals('Invalid version specified');
+        assume(builder.models.Build.findOne).was.not.called();
+        assume(builder.models.BuildHead.findOne).was.not.called();
+        assume(builder.assets.publish).was.not.called();
+        done();
+      });
+    });
+
+    it('should should return an error when there is an invalid version specified', function (done) {
+      builder.assets.publish.yieldsAsync(null, null);
+      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
+
+      builder.build({
+        name: 'test',
+        version: 'trash.panda',
+        env: 'dev'
+      }, (err) => {
+        assume(err).is.truthy();
+        assume(err.message).equals('Invalid version specified');
+        assume(builder.models.Build.findOne).was.not.called();
+        assume(builder.models.BuildHead.findOne).was.not.called();
+        assume(builder.assets.publish).was.not.called();
+        done();
+      });
+    });
   });
 
   describe('build.tarball', function () {

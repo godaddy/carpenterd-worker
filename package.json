@@ -6,7 +6,7 @@
   "scripts": {
     "lint:fix": "eslint-godaddy --fix preboot/  test/ *.js",
     "lint": "eslint-godaddy preboot/ test/ *.js",
-    "pretest": "npm run lint:fix",
+    "posttest": "npm run lint:fix",
     "test": "nyc mocha"
   },
   "repository": {
