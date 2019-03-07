@@ -183,41 +183,69 @@ describe('Builder', function () {
       });
     });
 
-    it('should should return an error when there is no version specified', function (done) {
-      builder.assets.publish.yieldsAsync(null, null);
-      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
-
-      builder.build({
-        name: 'test',
-        // explicitly not setting version
-        env: 'dev'
-      }, (err) => {
-        assume(err).is.truthy();
-        assume(err.message).equals('Invalid version specified');
-        assume(builder.models.Build.findOne).was.not.called();
-        assume(builder.models.BuildHead.findOne).was.not.called();
-        assume(builder.assets.publish).was.not.called();
-        done();
+    describe('spec validations', function () {
+      beforeEach(function () {
+        builder.assets.publish.yieldsAsync(null, null);
+        sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
+        sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
       });
-    });
 
-    it('should should return an error when there is an invalid version specified', function (done) {
-      builder.assets.publish.yieldsAsync(null, null);
-      sinon.stub(builder.models.Build, 'findOne').yieldsAsync(null, null);
-      sinon.stub(builder.models.BuildHead, 'findOne').yieldsAsync(null, fixtures.head);
-
-      builder.build({
-        name: 'test',
-        version: 'trash.panda',
-        env: 'dev'
-      }, (err) => {
-        assume(err).is.truthy();
-        assume(err.message).equals('Invalid version specified');
+      function assumeNothingCalled() {
         assume(builder.models.Build.findOne).was.not.called();
         assume(builder.models.BuildHead.findOne).was.not.called();
         assume(builder.assets.publish).was.not.called();
-        done();
+      }
+
+      it('should should return an error when there is no version specified', function (done) {
+        builder.build({
+          name: 'test',
+          // explicitly no version
+          env: 'dev'
+        }, (err) => {
+          assume(err).is.truthy();
+          assume(err.message).equals('Invalid version specified');
+          assumeNothingCalled();
+          done();
+        });
+      });
+
+      it('should should return an error when there is an invalid version specified', function (done) {
+        builder.build({
+          name: 'test',
+          version: 'trash.panda',
+          env: 'dev'
+        }, (err) => {
+          assume(err).is.truthy();
+          assume(err.message).equals('Invalid version specified');
+          assumeNothingCalled();
+          done();
+        });
+      });
+
+      it('should should return an error when there is no name specified', function (done) {
+        builder.build({
+          // Explicitly no name
+          version: '1.2.3',
+          env: 'dev'
+        }, (err) => {
+          assume(err).is.truthy();
+          assume(err.message).equals('name not specified');
+          assumeNothingCalled();
+          done();
+        });
+      });
+
+      it('should should return an error when there is no env specified', function (done) {
+        builder.build({
+          name: 'test',
+          version: '1.2.3'
+          // Explicitly no env
+        }, (err) => {
+          assume(err).is.truthy();
+          assume(err.message).equals('env not specified');
+          assumeNothingCalled();
+          done();
+        });
       });
     });
   });

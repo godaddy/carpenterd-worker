@@ -65,23 +65,36 @@ function Builder(opts = {}) {
  * @api public
  */
 Builder.prototype.build = function build(spec, callback) {
+  const statusKey = 'build';
   this.log.info('Received message', spec);
-  const promote = spec.promote !== false;
-  spec = rip(spec, 'promote');
-  const id = uuid();
-  const paths = this.paths(spec, id);
+  if (!spec) {
+    const err = failure('No spec to build');
+    process.nextTick(callback, err);
+    return;
+  }
 
   const { writer, topic } = this.status;
   const writeStream = new Writer({ writer, topic, spec, log: this.log });
 
-  this.log.profile(`${id}-init`);
-  const statusKey = 'build';
+  for (const prop of ['name', 'env']) {
+    if (!spec[prop]) {
+      const err = failure(`${prop} not specified`);
+      writeStream.end(statusKey, err, callback.bind(null, err));
+      return;
+    }
+  }
 
-  if (!spec || !semver.valid(spec.version)) {
+  if (!semver.valid(spec.version)) {
     const err = failure('Invalid version specified');
     writeStream.end(statusKey, err, callback.bind(null, err));
     return;
   }
+
+  const promote = spec.promote !== false;
+  spec = rip(spec, 'promote');
+  const id = uuid();
+  const paths = this.paths(spec, id);
+  this.log.profile(`${id}-init`);
 
   //
   // Check to see if we actually need to run this build
