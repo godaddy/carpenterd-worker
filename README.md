@@ -8,10 +8,8 @@
 
 `carpenterd-worker` is responsible for receiving job messages from
 [`carpenterd`][carpenterd] and executing the builds. After fetching a
-pre-installed `npm` tarball from a distributed storage like amazon s3,
-`webpack`/`browserify`/`babel` are used to build the bundle
-through [`workers-factory`][workers-factory].
-
+pre-installed `npm` tarball from a distributed storage like amazon s3. A
+[`workers-factory`][workers-factory] instance will build the bundle.
 
 ## Install
 
@@ -110,6 +108,12 @@ possible values that carpenterd-worker will send are:
 - `error` - Used to indicate that `carpenterd-worker` encountered an error
   and wasn't able to complete the build
 
+#### Build types
+
+The `buildType` value is parsed from the `package.json` by [carpenterd]. The
+types of supported builds are `webpack`/`browserify`/`babel`. For a more
+[detailed description see carpenterd build documentation][builds].
+
 ## Tests
 
 [Cassandra][cassandra] is required to run on localhost.
@@ -124,3 +128,4 @@ npm test
 [nsq]: http://nsq.io
 [cassandra]: http://cassandra.apache.org/
 [nsq.js]: https://github.com/jcrugzz/nsq.js/tree/addr-modify
+[builds]: https://github.com/godaddy/carpenterd#build-systems
