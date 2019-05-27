@@ -36,10 +36,10 @@ carpenterd(app)
 ## Dependencies
 
 - [`nsq`][nsq] for job distribution to all the workers in given cluster.
-- amazon s3 or an s3 like store for storing built assets and for fetching
+- Amazon S3 or an S3 like store for storing built assets and for fetching
   tarballs stored by [`carpenterd`][carpenterd].
-- A [`cassandra`][cassandra] cluster that is storing the `warehouse.ai`
-  system data.
+- A [`cassandra`][cassandra] cluster or similar No-SQL database that is
+  storing the `warehouse.ai` system data.
 
 ## Configuration
 
