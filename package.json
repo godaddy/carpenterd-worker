@@ -42,7 +42,7 @@
     "uuid": "~3.0.1",
     "warehouse-models": "^5.6.0",
     "winston": "~2.3.1",
-    "workers-factory": "^1.7.5"
+    "workers-factory": "^1.7.6"
   },
   "devDependencies": {
     "assume": "^2.2.0",
