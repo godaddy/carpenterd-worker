@@ -24,7 +24,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "~2.1.5",
-    "bffs": "^5.4.0",
+    "bffs": "^6.0.0",
     "bl": "~1.2.1",
     "booting": "~1.0.0",
     "datastar": "^1.7.0",
@@ -42,7 +42,7 @@
     "uuid": "~3.0.1",
     "warehouse-models": "^5.6.0",
     "winston": "~2.3.1",
-    "workers-factory": "^1.7.5"
+    "workers-factory": "^2.0.0"
   },
   "devDependencies": {
     "assume": "^2.2.0",
