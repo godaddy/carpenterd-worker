@@ -1,6 +1,6 @@
 {
   "name": "carpenterd-worker",
-  "version": "1.8.1",
+  "version": "2.0.0",
   "description": "Receives and runs builds received from nsqd",
   "main": "index.js",
   "scripts": {

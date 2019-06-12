@@ -1,5 +1,8 @@
 # CHANGELOG
 
+### 2.0.0
+
+- [#17] Update dependencies `bffs@^6.0.0`, `workers-factory@^2.0.0`
 - [#14] Add badges to `README.md` and test section
 - [#13] Default documenation
   - Add: `CONTRUBUTING.md`, `CHANGELOG.md`, `SECURITY.md`
@@ -9,3 +12,4 @@
 
 [#13]: https://github.com/godaddy/carpenterd-worker/pull/13
 [#14]: https://github.com/godaddy/carpenterd-worker/pull/14
+[#17]: https://github.com/godaddy/carpenterd-worker/pull/17
