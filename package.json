@@ -24,7 +24,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "~2.1.5",
-    "bffs": "^6.0.0",
+    "bffs": "^6.0.1",
     "bl": "~1.2.1",
     "booting": "~1.0.0",
     "datastar": "^1.7.0",
