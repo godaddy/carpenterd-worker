@@ -38,7 +38,7 @@
     "pkgcloud": "^1.7.0",
     "retryme": "^1.0.0",
     "rip-out": "^1.0.0",
-    "slay-config": "~2.2.0",
+    "slay-config": "~2.3.0",
     "uuid": "~3.0.1",
     "warehouse-models": "^5.6.0",
     "winston": "~2.3.1",
