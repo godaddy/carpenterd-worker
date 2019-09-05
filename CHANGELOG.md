@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- Update `nsq.js-k8` and `pkgcloud`
+
 ### 2.0.0
 
 - [#17] Update dependencies `bffs@^6.0.0`, `workers-factory@^2.0.0`
