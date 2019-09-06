@@ -1,6 +1,9 @@
 # CHANGELOG
 
+### 3.0.0
+
 - Update `nsq.js-k8` and `pkgcloud`
+- Update workers-factory to `3.0.0`
 
 ### 2.0.0
 
