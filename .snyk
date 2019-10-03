@@ -1,0 +1,92 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.13.5
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  SNYK-JS-HTTPSPROXYAGENT-469131:
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > gcp-metadata > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > teeny-request > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > gcs-resumable-upload > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > teeny-request > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > gtoken > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > gcp-metadata > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > gcs-resumable-upload > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > gcp-metadata > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > gtoken > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > @google-cloud/common > teeny-request > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > @google-cloud/common > google-auth-library > gtoken > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > gtoken > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - bffs > cdnup > pkgcloud > @google-cloud/storage > gcs-resumable-upload > google-auth-library > gcp-metadata > gaxios > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - pkgcloud > @google-cloud/storage > @google-cloud/common > teeny-request > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > pacote > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpmaccess > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpmhook > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpmorg > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpmsearch > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > pacote > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > npm-profile > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > pacote > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libcipm > pacote > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpmteam > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > libnpmteam > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > libnpmaccess > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > npm-profile > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > libnpmorg > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libcipm > pacote > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > libnpmpublish > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > pacote > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > libnpmhook > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
+    - workers-factory > npm > libnpm > libnpmsearch > npm-registry-fetch > make-fetch-happen > https-proxy-agent:
+        patched: '2019-10-03T23:11:54.711Z'
