@@ -4,6 +4,7 @@
   "description": "Receives and runs builds received from nsqd",
   "main": "index.js",
   "scripts": {
+    "localstack": "docker run -it -p 4569:4569 --rm localstack/localstack",
     "lint:fix": "eslint-godaddy --fix preboot/  test/ *.js",
     "lint": "eslint-godaddy preboot/ test/ *.js",
     "posttest": "npm run lint:fix",
@@ -24,10 +25,12 @@
   "license": "MIT",
   "dependencies": {
     "async": "~2.1.5",
-    "bffs": "^6.0.1",
+    "aws-liveness": "^1.1.0",
+    "aws-sdk": "^2.569.0",
+    "bffs": "^7.0.0",
     "bl": "~1.2.1",
     "booting": "~1.0.0",
-    "datastar": "^1.7.0",
+    "dynamodb-x": "^1.2.3",
     "failure": "^1.1.1",
     "millisecond": "~0.1.2",
     "nconf": "~0.8.4",
@@ -40,7 +43,7 @@
     "rip-out": "^1.0.0",
     "slay-config": "~2.3.0",
     "uuid": "~3.0.1",
-    "warehouse-models": "^5.6.0",
+    "warehouse-models": "^6.0.0",
     "winston": "~2.3.1",
     "workers-factory": "^3.0.0"
   },

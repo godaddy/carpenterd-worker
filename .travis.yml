@@ -1,13 +1,20 @@
 language: node_js
-node_js:
-  - '10'
-  - '8'
 
-matrix:
-  allow_failures:
-  - node_js: '10'
+node_js:
+  - "10"
+  - "12"
+
+services:
+  - docker
+
+before_install:
+  - docker pull localstack/localstack
+  - docker run -d -p 127.0.0.1:4569:4569 --name localstack localstack/localstack
+
+install: npm install
 
 env:
+  - AWS_ACCESS_KEY_ID=foobar AWS_SECRET_ACCESS_KEY=foobar
   global:
   - secure: nXWi4Ge2hWTb4Wh5snDHBz24jrQAm65i/SeZfsfEg23auJdFsCP+c6NZM169U1cKYy2dLzJoCIkHIHwF7XZjnS8QFnrvirnWxyY9a7S1dXQdA9DRfeAjp1dZaryE6hxOK8oRd77Hum/UWfxi2Z+CeAI+hytntHfJORHsrOetcif9KGOGksCnEPcmGaJrw7vLaa3FfAvdgnpiWvMYlXOv0W+0Cg18pu8bapawR6zIYmbU0Bg1dEUIcyl7JvSkD5pFRa1jbqZE7uCdp3QHUMUf3Js2WiebswcMgCskx9vOWoJ76xO7XSxDeiRcaWHPQzCoQ91LxkhgvzmdzYX427xtqfJRDR2cZn0UZMLtge/E9fD9D0yme4GOxrvsWt4lyGKS7b5XjXEVf5XAV3dqnDrXMSrArOAaVplPx2F1GD9SRMKaiwCXmLMlK6lR4/IIGyYotNVpbvzQPUf5OAa/scPQcIEGBn7wEzJBX8NyaiLECPmNXbDSqls1ktIddt93o2ADKNDzM1l3bzEjcOf4X87Cpy2+8QqcjebmUxtLha5GcAHJso3jA72/aL7F+o5cGAJfwsF2pfbHOGQ5y1J1srclMxHb8zdRb7ijnyc0FIJundkCjDTPywJ4EUj3qYdpAe6d3OMwO7YZrD9l441ldj6Z5HFSj06QTFXaf6NpDM+mrHI=
   - secure: DFyRvPPz20Wuc4iDE4JonuEwjCfAnsnQWyvurcTajRqoUqWq2DCsdsMT1y4FgM+RB5tf8/Am3m0FTW3ctIj7893UaMqqR9jBnN2jJ5mEgZPGMa0iopKQXSv3Rcc9mj2WtueXyCJ7AFg/ZSSCj0Ulgqv9JNe8vU4JROR6GNL9ZEFfki98gfYpUt7nP4gPlwvIetR0cb8TlVGqiTyMa3CC4kexEGdVpsMEMudB5tFoHgR0O6twqFL03E11hJHwrCld5JHJbGEhnJYqaQqE8qIFk0MUujQSs3pQPd4UCCbe7U22wz9lM8HMREywcDpToQh7jMGxE3kCADm+oQad5KjR2d2fho/jDoO+elK4k6yVkmsrVRT8AKSfYbT5FzoAul55dGjO53DQA4OvGyAnm/Eyz2XEg/w1oIaCXvzVyCiTer+EyAUsiRUlZR8bten44Et0lV+DKxQWfInr4cX1ptjfKJwnNjIBDptNbHVWF9SdWanHXX13EurZOECt9Pqi8N0RmzzZClwjcXPbYK1E6V83oi5Cq1XXyJcQOIdgKxN6xJyvbQepBNAx//gqCGC7TI3NzsBW6s8MDeez/A/GIxv2CUL/wDioGkUBQhtaq6apEVyfd+O3u5iyP6ji/wm6f25jYodG0NOgwW6LzGJBXnZzVTeix/aDJKMfb9wClQ/r/9Q=
