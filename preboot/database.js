@@ -1,4 +1,4 @@
-'use strict';
+
 
 const { DynamoDB } = require('aws-sdk');
 const dynamo = require('dynamodb-x');
@@ -6,7 +6,7 @@ const AwsLiveness = require('aws-liveness');
 const wrhs = require('warehouse-models');
 
 module.exports = function (app, done) {
-  const ensure = app.config.get('ensure') || options.ensure;
+  const ensure = app.config.get('ensure');
   const dynamoDriver = new DynamoDB(app.config.get('database'));
 
   dynamo.dynamoDriver(dynamoDriver);
