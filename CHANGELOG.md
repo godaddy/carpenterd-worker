@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- [#27] Use DynamoDB based models.
+
 ### 3.0.0
 
 - Update `nsq.js-k8` and `pkgcloud`
@@ -18,3 +20,4 @@
 [#13]: https://github.com/godaddy/carpenterd-worker/pull/13
 [#14]: https://github.com/godaddy/carpenterd-worker/pull/14
 [#17]: https://github.com/godaddy/carpenterd-worker/pull/17
+[#27]: https://github.com/godaddy/carpenterd-worker/pull/27

@@ -38,8 +38,6 @@ carpenterd(app)
 - [`nsq`][nsq] for job distribution to all the workers in given cluster.
 - amazon s3 or an s3 like store for storing built assets and for fetching
   tarballs stored by [`carpenterd`][carpenterd].
-- A [`cassandra`][cassandra] cluster that is storing the `warehouse.ai`
-  system data.
 
 ## Configuration
 
@@ -54,8 +52,7 @@ See the example config `config.example.json` in this repo.
   CDN assets are uploaded.
 - `http` is the http port the healhcheck listens on.
 - `npm-tars` the npm tarball bucket to fetch from.
-- `datastar` the configuration for cassandra that gets passed directly to
-  [`datastar`][datastar].
+- `database` the configuration for the database.
 
 ## Build Options
 
@@ -116,16 +113,23 @@ types of supported builds are `webpack`/`browserify`/`babel`. For a more
 
 ## Tests
 
-[Cassandra][cassandra] is required to run on localhost.
+Run an AWS local cloud stack, pull `latest` [localstack].
+This requires `docker` [to be setup][docker].
 
-```bash
+```sh
+docker pull localstack/localstack:latest
+npm run localstack
+```
+
+Run tests in a separate terminal.
+
+```sh
 npm test
 ```
 
 [carpenterd]: https://github.com/godaddy/carpenterd
 [workers-factory]: https://github.com/warehouseai/workers-factory
-[datastar]: https://github.com/godaddy/datastar
 [nsq]: http://nsq.io
-[cassandra]: http://cassandra.apache.org/
 [nsq.js]: https://github.com/jcrugzz/nsq.js/tree/addr-modify
 [builds]: https://github.com/godaddy/carpenterd#build-systems
+[docker]: https://docs.docker.com/get-started/

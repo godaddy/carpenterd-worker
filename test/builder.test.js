@@ -2,7 +2,7 @@
 const Builder = require('../builder');
 const fs = require('fs');
 const uuid = require('uuid');
-const databoot = require('../preboot/datastar');
+const databoot = require('../preboot/database');
 const assume = require('assume');
 const sinon = require('sinon');
 const os = require('os');
@@ -19,27 +19,22 @@ describe('Builder', function () {
   let builder;
   let app;
 
+  const config = {
+    database: {
+      endpoint: 'http://localhost:4569',
+      region: 'us-east-1'
+    },
+    ensure: true
+  };
+
   before(function (done) {
     app = new Map();
-    app.config = { get: noop };
-    app.set('datastar', {
-      config: {
-        user: process.env.DATASTAR_USER,
-        password: process.env.DATASTAR_PASSWORD,
-        keyspace: process.env.DATASTAR_KEYSPACE,
-        hosts: [process.env.DATASTAR_HOST],
-        keyspaceOptions: {
-          class: 'SimpleStrategy',
-          replication_factor: 1
-        }
-      }
-    });
-    app.set('ensure', true);
+    app.config = { get: prop => config[prop] };
     databoot(app, (err) => {
       builder = new Builder({
         log: { info: noop, error: noop, profile: noop },
         paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
-        datastar: app.datastar,
+        database: app.database,
         models: app.models,
         bucket: process.env.AWS_BUCKET,
         pkgcloud: {
@@ -51,9 +46,9 @@ describe('Builder', function () {
         },
         concurrency: 1
       });
+
       done(err);
     });
-
   });
 
   beforeEach(function () {
@@ -64,9 +59,8 @@ describe('Builder', function () {
     sinon.restore();
   });
 
-  after(function (done) {
+  after(function () {
     builder = null;
-    app.datastar.close(done);
   });
 
   describe('builder.write', function () {
@@ -277,7 +271,7 @@ describe('Builder', function () {
       builder = new Builder({
         log: { info: noop, error: noop, profile: noop },
         paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
-        datastar: app.datastar,
+        database: app.database,
         models: app.models,
         bucket: process.env.AWS_BUCKET,
         pkgcloud: {
