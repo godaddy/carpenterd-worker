@@ -46,9 +46,9 @@ describe('Builder', function () {
         },
         concurrency: 1
       });
+      
       done(err);
     });
-
   });
 
   beforeEach(function () {
