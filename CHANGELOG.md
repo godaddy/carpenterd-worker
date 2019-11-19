@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- fix logging
+
 ### 4.0.0
 
 - [#27] Use DynamoDB based models.
