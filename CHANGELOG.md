@@ -1,5 +1,7 @@
 # CHANGELOG
 
+### 4.0.1
+
 - fix logging
 
 ### 4.0.0
