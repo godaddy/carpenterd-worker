@@ -1,14 +1,15 @@
-const winston = require('winston');
+const { transports, format, createLogger } = require('winston');
 
 module.exports = function loggers(app, next) {
   const opts = Object.assign({
-    transports: [
-      new (winston.transports.Console)({
-        raw: app.env !== 'development'
-      })
-    ]
+    format: format.combine(
+      format.timestamp(),
+      format.splat(),
+      format.json()
+    ),
+    transports: [new (transports.Console)()]
   }, app.get('logger'), app.config.get('logger'));
 
-  app.log = new winston.Logger(opts);
+  app.log = createLogger(opts);
   next();
 };
