@@ -1,5 +1,7 @@
 # CHANGELOG
 
+### 4.0.3
+
 - Fix missing assign for config merging
 
 ### 4.0.2
