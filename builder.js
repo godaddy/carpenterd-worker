@@ -38,10 +38,10 @@ function Builder(opts = {}) {
     opts.pkgcloud || {}
   );
   this.retry = opts.retry || {};
-  this.assets = new Bffs({
+  this.assets = new Bffs(assign({
     models: opts.models,
     db: opts.database
-  }, opts.assets || {});
+  }, opts.assets || {}));
   this.models = opts.models;
   this.conc = opts.concurrency || 2;
   this._paths = opts.paths;
