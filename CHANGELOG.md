@@ -1,5 +1,7 @@
 # CHANGELOG
 
+### 4.0.2
+
 - Fix last datastar references
 
 ### 4.0.1
