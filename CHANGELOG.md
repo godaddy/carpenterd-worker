@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- Fix missing assign for config merging
+
 ### 4.0.2
 
 - Fix last datastar references
