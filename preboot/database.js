@@ -1,5 +1,4 @@
 
-
 const { DynamoDB } = require('aws-sdk');
 const dynamo = require('dynamodb-x');
 const AwsLiveness = require('aws-liveness');

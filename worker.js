@@ -9,7 +9,7 @@ module.exports = function worker(err, app) {
   const builder = new Builder({
     log: app.log,
     models: app.models,
-    datastar: app.datastar,
+    database: app.database,
     retry: app.config.get('retry'),
     bucket: app.config.get('npm-tars:bucket'),
     pkgcloud: app.config.get('npm-tars:pkgcloud'),
@@ -55,10 +55,7 @@ module.exports = function worker(err, app) {
 // (ie during deploys as well as scenarios where we might be in a bad state);
 //
 function shutdown(app) {
-  async.series([
-    app.http.close.bind(app.http),
-    app.datastar.close.bind(app.datastar)
-  ], (err) => {
+  app.http.close((err) => {
     if (err) app.log.error(err.message);
     process.exit(0);
   });
