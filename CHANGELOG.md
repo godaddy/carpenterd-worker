@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 4.1.0
+
+- Update to `workers-factory@3.1.0`.
+
 ### 4.0.3
 
 - Fix missing assign for config merging

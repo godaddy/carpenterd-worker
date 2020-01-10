@@ -36,12 +36,12 @@ describe('Builder', function () {
         paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
         database: app.database,
         models: app.models,
-        bucket: process.env.AWS_BUCKET,
+        bucket: process.env.WRHS_TEST_AWS_PREFIX,
         pkgcloud: {
           provider: 'amazon',
           endpoint: 's3.amazonaws.com',
-          keyId: process.env.AWS_KEY_ID,
-          key: process.env.AWS_KEY,
+          keyId: process.env.WRHS_TEST_AWS_KEY_ID,
+          key: process.env.WRHS_TEST_AWS_KEY,
           forcePathBucket: true
         },
         concurrency: 1
@@ -266,19 +266,19 @@ describe('Builder', function () {
     });
   });
 
-  describe('status messsages', function () {
+  describe('status messages', function () {
     before(function () {
       builder = new Builder({
         log: { info: noop, error: noop, profile: noop },
         paths: { root: path.join(os.tmpdir(), 'carpenterd-worker') },
         database: app.database,
         models: app.models,
-        bucket: process.env.AWS_BUCKET,
+        bucket: process.env.WRHS_TEST_AWS_PREFIX,
         pkgcloud: {
           provider: 'amazon',
           endpoint: 's3.amazonaws.com',
-          keyId: process.env.AWS_KEY_ID,
-          key: process.env.AWS_KEY,
+          keyId: process.env.WRHS_TEST_AWS_KEY_ID,
+          key: process.env.WRHS_TEST_AWS_KEY,
           forcePathBucket: true
         },
         concurrency: 1,

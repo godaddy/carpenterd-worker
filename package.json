@@ -1,6 +1,6 @@
 {
   "name": "carpenterd-worker",
-  "version": "4.0.3",
+  "version": "4.1.0",
   "description": "Receives and runs builds received from nsqd",
   "main": "index.js",
   "scripts": {
@@ -45,7 +45,7 @@
     "uuid": "^3.3.3",
     "warehouse-models": "^6.0.0",
     "winston": "^3.2.1",
-    "workers-factory": "^3.0.0"
+    "workers-factory": "^3.1.0"
   },
   "devDependencies": {
     "assume": "^2.2.0",
