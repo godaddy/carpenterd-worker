@@ -35,7 +35,7 @@
     "millisecond": "^0.1.2",
     "nconf": "^0.10.0",
     "nsq-stream": "^2.1.1",
-    "nsq.js-k8": "^1.2.0",
+    "nsq.js-k8": "^1.2.1",
     "one-time": "^1.0.0",
     "parallel-transform": "^1.2.0",
     "pkgcloud": "^2.1.1",
