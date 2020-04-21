@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- Update `bffs@7.0.2`
+
 ### 4.1.0
 
 - Update to `workers-factory@3.1.0`.
