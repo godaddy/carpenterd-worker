@@ -1,5 +1,7 @@
 # CHANGELOG
 
+### 4.1.2
+
 - Update `bffs@7.0.2`
 
 ### 4.1.0
