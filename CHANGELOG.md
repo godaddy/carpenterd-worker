@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- Allow `DATABASE_REGION` env var to dictate dynamo region
+
 ### 4.1.2
 
 - Update `bffs@7.0.2`
