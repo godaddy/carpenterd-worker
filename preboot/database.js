@@ -6,7 +6,12 @@ const wrhs = require('warehouse-models');
 
 module.exports = function (app, done) {
   const ensure = app.config.get('ensure');
-  const dynamoDriver = new DynamoDB(app.config.get('database'));
+  const region = app.config.get('DATABASE_REGION') || app.config.get('AWS_DEFAULT_REGION');
+  const config = app.config.get('database') || {};
+  const dynamoDriver = new DynamoDB({
+    region,
+    ...config
+  });
 
   dynamo.dynamoDriver(dynamoDriver);
   app.models = wrhs(dynamo);
