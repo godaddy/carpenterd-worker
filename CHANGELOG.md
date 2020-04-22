@@ -1,5 +1,7 @@
 # CHANGELOG
 
+### 4.1.3
+
 - Allow `DATABASE_REGION` env var to dictate dynamo region
 
 ### 4.1.2
