@@ -33,7 +33,7 @@
     "dynamodb-x": "^1.2.3",
     "failure": "^1.1.1",
     "millisecond": "^0.1.2",
-    "nconf": "^0.10.0",
+    "nconf": "^0.11.0",
     "nsq-stream": "^2.1.1",
     "nsq.js-k8": "^1.2.1",
     "one-time": "^1.0.0",
