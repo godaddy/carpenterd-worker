@@ -1,5 +1,7 @@
 # `carpenterd-worker`
 
+> ⚠️ **DEPRECATED**: This package is no longer maintained and has been deprecated. Please use an alternative solution or contact the maintainers for more information.
+
 [![Version npm](https://img.shields.io/npm/v/carpenterd-worker.svg?style=flat-square)](https://www.npmjs.com/package/carpenterd-worker)
 [![License](https://img.shields.io/npm/l/carpenterd-worker.svg?style=flat-square)](https://github.com/godaddy/carpenterd-worker/blob/master/LICENSE)
 [![npm Downloads](https://img.shields.io/npm/dm/carpenterd-worker.svg?style=flat-square)](https://npmcharts.com/compare/carpenterd-worker?minimal=true)
